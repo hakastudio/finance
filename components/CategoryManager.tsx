@@ -41,7 +41,7 @@ const getCategoryIcon = (name: string) => {
   if (cat.includes('invest') || cat.includes('saham') || cat.includes('crypto')) return <TrendingUp className="w-5 h-5" />;
   if (cat.includes('bonus') || cat.includes('thr')) return <Coins className="w-5 h-5" />;
   if (cat.includes('hadiah') || cat.includes('donasi')) return <Gift className="w-5 h-5" />;
-  if (cat.includes('travel') || cat.includes('liburan') || cat.includes('hotel')) return <Plane className="w-5 h-5" />;
+  if (cat.includes('travel') || cat.includes('liburan') || cat.includes('pesawat') || cat.includes('hotel')) return <Plane className="w-5 h-5" />;
   if (cat.includes('asuransi')) return <Shield className="w-5 h-5" />;
   return <Tag className="w-5 h-5" />;
 };
@@ -52,7 +52,9 @@ const CategoryManager: React.FC<Props> = ({ categories, transactions, onAdd, onU
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
 
-  const filteredCategories = categories.filter(c => c.type === activeType);
+  const filteredCategories = useMemo(() => {
+    return categories.filter(c => c.type === activeType);
+  }, [categories, activeType]);
 
   const usageStats = useMemo(() => {
     return transactions.reduce((acc: Record<string, number>, t) => {
@@ -63,10 +65,17 @@ const CategoryManager: React.FC<Props> = ({ categories, transactions, onAdd, onU
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newCatName.trim()) {
-      onAdd(newCatName.trim(), activeType);
-      setNewCatName('');
+    const nameTrimmed = newCatName.trim();
+    if (!nameTrimmed) return;
+
+    // Cek duplikasi
+    if (categories.some(c => c.name.toLowerCase() === nameTrimmed.toLowerCase() && c.type === activeType)) {
+      alert('Kategori dengan nama ini sudah ada.');
+      return;
     }
+
+    onAdd(nameTrimmed, activeType);
+    setNewCatName('');
   };
 
   const startEditing = (cat: Category) => {
@@ -75,9 +84,23 @@ const CategoryManager: React.FC<Props> = ({ categories, transactions, onAdd, onU
   };
 
   const saveEditing = () => {
-    if (editingId && editingName.trim()) {
-      onUpdate(editingId, editingName.trim());
+    const nameTrimmed = editingName.trim();
+    if (editingId && nameTrimmed) {
+      // Validasi duplikasi (kecuali dirinya sendiri)
+      const isDuplicate = categories.some(c => 
+        c.id !== editingId && 
+        c.type === activeType && 
+        c.name.toLowerCase() === nameTrimmed.toLowerCase()
+      );
+
+      if (isDuplicate) {
+        alert('Nama kategori sudah digunakan.');
+        return;
+      }
+
+      onUpdate(editingId, nameTrimmed);
       setEditingId(null);
+      setEditingName('');
     }
   };
 
@@ -154,11 +177,11 @@ const CategoryManager: React.FC<Props> = ({ categories, transactions, onAdd, onU
               <div className="space-y-4 animate-fadeIn">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-3 bg-indigo-600 text-white rounded-xl">
-                    <Edit2 className="w-4 h-4" />
+                    <Edit3 className="w-4 h-4" />
                   </div>
                   <div>
                     <h5 className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Sedang Mengubah</h5>
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Pastikan nama unik.</p>
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Tekan Enter untuk simpan.</p>
                   </div>
                 </div>
                 
@@ -217,8 +240,7 @@ const CategoryManager: React.FC<Props> = ({ categories, transactions, onAdd, onU
                     onClick={() => startEditing(cat)}
                     className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-all font-black text-[9px] uppercase tracking-widest"
                   >
-                    {/* Fixed: Use Edit2 which is already imported to replace the non-existent Edit3 */}
-                    <Edit2 className="w-3.5 h-3.5" /> Edit Nama
+                    <Edit3 className="w-3.5 h-3.5" /> Ubah Nama
                   </button>
                   
                   {cat.isCustom ? (
