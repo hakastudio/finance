@@ -7,13 +7,26 @@
     <title>KEUANGAN JEJAK LANGKAH - Smart Money Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #f8fafc;
             color: #1e293b;
             overflow-x: hidden;
+            transition: background-color 0.3s ease;
         }
+        
+        /* Dark mode body override */
+        html.dark body {
+            background-color: #020617;
+            color: #f8fafc;
+        }
+
         .animate-fadeIn {
             animation: fadeIn 0.5s ease-out forwards;
         }
@@ -21,6 +34,7 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
         .sidebar-active {
             position: relative;
         }
@@ -35,7 +49,8 @@
             border-radius: 0 4px 4px 0;
             box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
         }
-        /* Custom Scrollbar */
+
+        /* Custom Scrollbar Light */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -49,11 +64,27 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
-        /* Glassmorphism utility */
+
+        /* Custom Scrollbar Dark */
+        html.dark ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        html.dark ::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+        html.dark ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
         .glass {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        
+        html.dark .glass {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(30, 41, 59, 0.4);
         }
     </style>
 <script type="importmap">

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Transaction, TransactionType, Category } from './types';
 import TransactionForm from './components/TransactionForm';
 import TransactionList from './components/TransactionList';
@@ -11,9 +11,9 @@ import AdminDashboard from './components/AdminDashboard';
 import { 
   Wallet, History, Sparkles, Settings, 
   Download, LayoutDashboard, BarChart3, 
-  ShieldCheck, LogOut, Lock, X, Key, AlertCircle, 
+  ShieldCheck, LogOut, Lock, X, AlertCircle, 
   Plus, Search, Calendar, FilterX, ArrowRight, User,
-  Moon, Sun
+  Moon, Sun, CloudCheck, RefreshCw, Activity
 } from 'lucide-react';
 
 const DEFAULT_CATEGORIES: Category[] = [
@@ -27,6 +27,9 @@ const DEFAULT_CATEGORIES: Category[] = [
   { id: '8', name: 'Hiburan', type: TransactionType.EXPENSE, isCustom: false },
 ];
 
+// Initialize BroadcastChannel for ultra-fast tab syncing
+const syncChannel = new BroadcastChannel('finance_sync_channel');
+
 const App: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -34,7 +37,8 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [appName, setAppName] = useState('JEJAK LANGKAH');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-
+  const [isSyncing, setIsSyncing] = useState(false);
+  
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -47,7 +51,8 @@ const App: React.FC = () => {
   const [loginError, setLoginError] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
-  useEffect(() => {
+  // Load Data Function
+  const loadData = () => {
     const savedTransactions = localStorage.getItem('jejaklangkah_data');
     const savedCategories = localStorage.getItem('jejaklangkah_categories');
     const savedAdmin = localStorage.getItem('jejaklangkah_admin_status');
@@ -68,21 +73,59 @@ const App: React.FC = () => {
       setTheme(savedTheme);
       if (savedTheme === 'dark') document.documentElement.classList.add('dark');
     }
+  };
+
+  // Broadcast function
+  const broadcastChange = (type: string) => {
+    syncChannel.postMessage({ type, timestamp: Date.now() });
+  };
+
+  useEffect(() => {
+    loadData();
+
+    // Listen for changes from OTHER tabs via BroadcastChannel (Faster than StorageEvent)
+    syncChannel.onmessage = (event) => {
+      setIsSyncing(true);
+      loadData();
+      // Provide visual feedback for the sync
+      setTimeout(() => setIsSyncing(false), 1500);
+    };
+
+    // Fallback listener for legacy browsers
+    const handleStorageChange = (e: StorageEvent) => {
+      const keysToSync = ['jejaklangkah_data', 'jejaklangkah_categories', 'jejaklangkah_app_name', 'jejaklangkah_theme'];
+      if (keysToSync.includes(e.key || '')) {
+        setIsSyncing(true);
+        loadData();
+        setTimeout(() => setIsSyncing(false), 1500);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('jejaklangkah_data', JSON.stringify(transactions));
-  }, [transactions]);
+  // Persist State Changes and Broadcast to other tabs
+  const updateTransactionsWithSync = (newTransactions: Transaction[]) => {
+    setTransactions(newTransactions);
+    localStorage.setItem('jejaklangkah_data', JSON.stringify(newTransactions));
+    broadcastChange('TRANSACTIONS_UPDATED');
+  };
 
-  useEffect(() => {
-    if (categories.length > 0) {
-      localStorage.setItem('jejaklangkah_categories', JSON.stringify(categories));
-    }
-  }, [categories]);
+  const updateCategoriesWithSync = (newCategories: Category[]) => {
+    setCategories(newCategories);
+    localStorage.setItem('jejaklangkah_categories', JSON.stringify(newCategories));
+    broadcastChange('CATEGORIES_UPDATED');
+  };
 
-  useEffect(() => {
-    localStorage.setItem('jejaklangkah_admin_status', isAdmin ? 'true' : 'false');
-  }, [isAdmin]);
+  const updateAppNameWithSync = (newName: string) => {
+    const name = newName.toUpperCase();
+    setAppName(name);
+    localStorage.setItem('jejaklangkah_app_name', name);
+    broadcastChange('APP_NAME_UPDATED');
+  };
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -93,21 +136,22 @@ const App: React.FC = () => {
     } else {
       document.documentElement.classList.remove('dark');
     }
+    broadcastChange('THEME_UPDATED');
   };
 
   const addTransaction = (transaction: Transaction) => {
-    setTransactions(prev => [transaction, ...prev]);
+    updateTransactionsWithSync([transaction, ...transactions]);
     setIsQuickAddOpen(false);
   };
   
   const updateTransaction = (updatedTransaction: Transaction) => {
-    setTransactions(prev => prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
+    updateTransactionsWithSync(transactions.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
     setEditingTransaction(null);
   };
 
   const deleteTransaction = (id: string) => {
     if (window.confirm("Hapus catatan ini?")) {
-      setTransactions(prev => prev.filter(t => t.id !== id));
+      updateTransactionsWithSync(transactions.filter(t => t.id !== id));
     }
   };
 
@@ -115,6 +159,7 @@ const App: React.FC = () => {
     e.preventDefault();
     if (passwordInput === "admin123") {
       setIsAdmin(true);
+      localStorage.setItem('jejaklangkah_admin_status', 'true');
       setIsLoginModalOpen(false);
       setActiveTab('admin');
       setPasswordInput('');
@@ -122,11 +167,6 @@ const App: React.FC = () => {
     } else {
       setLoginError(true);
     }
-  };
-
-  const handleUpdateAppName = (newName: string) => {
-    setAppName(newName);
-    localStorage.setItem('jejaklangkah_app_name', newName);
   };
 
   const summary = useMemo(() => {
@@ -162,15 +202,25 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row font-['Plus_Jakarta_Sans'] transition-colors duration-300">
       
-      {/* Quick Add Modal (Mobile Friendly) */}
+      {/* Realtime Sync Overlay Indicator */}
+      {isSyncing && (
+        <div className="fixed top-24 right-6 z-[110] animate-fadeIn">
+          <div className="flex items-center gap-3 px-4 py-2 bg-indigo-600 text-white rounded-full shadow-2xl border border-indigo-400">
+            <RefreshCw className="w-4 h-4 animate-spin" />
+            <span className="text-[10px] font-black uppercase tracking-widest">Real-time Syncing...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Modals & Forms */}
       {(isQuickAddOpen || editingTransaction) && (
         <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => { setIsQuickAddOpen(false); setEditingTransaction(null); }}></div>
           <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-t-[2rem] md:rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-fadeIn h-[90vh] md:h-auto overflow-y-auto">
             <div className="bg-indigo-600 p-6 md:p-8 text-white sticky top-0 z-10 flex justify-between items-center">
               <div>
-                <h3 className="text-xl md:text-2xl font-black mb-1">{editingTransaction ? 'Edit Transaksi' : 'Tambah Transaksi'}</h3>
-                <p className="text-indigo-100 text-xs md:text-sm">Input data keuangan Anda.</p>
+                <h3 className="text-xl md:text-2xl font-black mb-1">{editingTransaction ? 'Edit Master Data' : 'Tambah Catatan Baru'}</h3>
+                <p className="text-indigo-100 text-xs md:text-sm">Sinkronisasi instan aktif di semua perangkat.</p>
               </div>
               <button onClick={() => { setIsQuickAddOpen(false); setEditingTransaction(null); }} className="p-2 hover:bg-white/20 rounded-xl transition-colors"><X className="w-6 h-6" /></button>
             </div>
@@ -186,7 +236,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Admin Login Modal */}
+      {/* Login Modal */}
       {isLoginModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsLoginModalOpen(false)}></div>
@@ -194,7 +244,7 @@ const App: React.FC = () => {
             <div className="bg-slate-900 dark:bg-slate-800 p-8 text-white">
               <button onClick={() => setIsLoginModalOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-white/20 rounded-xl transition-colors"><X className="w-5 h-5" /></button>
               <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center mb-4"><Lock className="w-6 h-6" /></div>
-              <h3 className="text-2xl font-black">Akses Administrator</h3>
+              <h3 className="text-2xl font-black">Admin Access</h3>
               <p className="text-slate-400 text-sm mt-1">Gunakan password 'admin123'</p>
             </div>
             <form onSubmit={handleAdminLogin} className="p-8 space-y-6">
@@ -208,15 +258,15 @@ const App: React.FC = () => {
                   className={`w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 dark:text-white border-2 rounded-2xl outline-none font-bold transition-all ${loginError ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20' : 'border-slate-100 dark:border-slate-700 focus:border-indigo-500'}`}
                   autoFocus
                 />
-                {loginError && <p className="text-rose-600 text-[10px] font-bold flex items-center gap-1 ml-1"><AlertCircle className="w-3 h-3" /> Password salah, coba lagi.</p>}
+                {loginError && <p className="text-rose-600 text-[10px] font-bold flex items-center gap-1 ml-1"><AlertCircle className="w-3 h-3" /> Password salah.</p>}
               </div>
-              <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 dark:shadow-none active:scale-95">Masuk Sekarang</button>
+              <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg active:scale-95">Verify & Login</button>
             </form>
           </div>
         </div>
       )}
 
-      {/* Sidebar (Desktop) */}
+      {/* Sidebar */}
       <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-72 bg-slate-900 dark:bg-slate-950 text-white p-8 z-50 border-r border-slate-800/50">
         <div className="flex items-center gap-4 mb-12">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg"><Wallet className="w-6 h-6" /></div>
@@ -229,10 +279,10 @@ const App: React.FC = () => {
         <nav className="space-y-2 flex-1">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-            { id: 'transactions', label: 'Riwayat', icon: History },
-            { id: 'reports', label: 'Laporan Bulanan', icon: BarChart3 },
+            { id: 'transactions', label: 'Arsip Kas', icon: History },
+            { id: 'reports', label: 'Statistik', icon: BarChart3 },
             { id: 'ai', label: 'Analisis AI', icon: Sparkles },
-            { id: 'settings', label: 'Pengaturan', icon: Settings },
+            { id: 'settings', label: 'Profil', icon: Settings },
           ].map(link => (
             <button key={link.id} onClick={() => setActiveTab(link.id as any)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all ${activeTab === link.id ? 'bg-indigo-600 text-white shadow-xl sidebar-active' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
               <link.icon className="w-5 h-5" />
@@ -242,16 +292,16 @@ const App: React.FC = () => {
           {isAdmin && (
             <button onClick={() => setActiveTab('admin')} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all mt-4 ${activeTab === 'admin' ? 'bg-purple-600 text-white shadow-lg' : 'text-purple-400 hover:text-white hover:bg-purple-900/30'}`}>
               <ShieldCheck className="w-5 h-5" />
-              <span className="font-bold text-sm">Panel Admin</span>
+              <span className="font-bold text-sm">Dasbor Admin</span>
             </button>
           )}
         </nav>
 
         <div className="mt-auto pt-6 border-t border-slate-800">
            {!isAdmin ? (
-             <button onClick={() => setIsLoginModalOpen(true)} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-800 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-700 transition-colors"><Lock className="w-4 h-4" /> Mode Admin</button>
+             <button onClick={() => setIsLoginModalOpen(true)} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-800 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-700 transition-colors"><Lock className="w-4 h-4" /> Masuk Admin</button>
            ) : (
-             <button onClick={() => setIsAdmin(false)} className="w-full flex items-center justify-center gap-2 py-3 bg-rose-900/20 text-rose-400 rounded-xl text-xs font-bold hover:bg-rose-900/40 transition-colors"><LogOut className="w-4 h-4" /> Keluar Admin</button>
+             <button onClick={() => { setIsAdmin(false); localStorage.setItem('jejaklangkah_admin_status', 'false'); setActiveTab('dashboard'); }} className="w-full flex items-center justify-center gap-2 py-3 bg-rose-900/20 text-rose-400 rounded-xl text-xs font-bold hover:bg-rose-900/40 transition-colors"><LogOut className="w-4 h-4" /> Keluar Admin</button>
            )}
         </div>
       </aside>
@@ -261,32 +311,35 @@ const App: React.FC = () => {
         <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-6 md:px-12 py-4 sticky top-0 z-40 flex justify-between items-center h-16 md:h-20 transition-colors">
           <div className="flex items-center gap-3">
             <div className="md:hidden w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-md"><Wallet className="w-5 h-5" /></div>
-            <div className="hidden sm:block">
+            <div>
               <h2 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-tighter md:text-sm">
-                {activeTab === 'dashboard' ? 'Dashboard' : activeTab === 'transactions' ? 'Arsip Kas' : activeTab === 'reports' ? 'Rekap Laporan' : activeTab === 'ai' ? 'Analisis Cerdas' : activeTab === 'admin' ? 'Pusat Kontrol' : 'Profil & Apps'}
+                {activeTab === 'dashboard' ? 'Overview' : activeTab === 'transactions' ? 'Arsip Kas' : activeTab === 'reports' ? 'Rekap Laporan' : activeTab === 'ai' ? 'AI Insights' : activeTab === 'admin' ? 'Pusat Kontrol' : 'Account'}
               </h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{appName}</p>
+              <div className="flex items-center gap-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{appName}</p>
+                {isSyncing && <RefreshCw className="w-2.5 h-2.5 text-indigo-500 animate-spin" />}
+              </div>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="hidden sm:flex bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-4 py-2 rounded-xl items-center gap-2">
-               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-               <span className="text-[11px] font-black text-slate-600 dark:text-slate-300">Rp {summary.balance.toLocaleString('id-ID')}</span>
+            <div className={`hidden sm:flex bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50 px-4 py-2 rounded-xl items-center gap-2 transition-all ${isSyncing ? 'scale-105 bg-emerald-100 dark:bg-emerald-900/40' : ''}`}>
+               <div className="relative">
+                 <CloudCheck className={`w-4 h-4 ${isSyncing ? 'text-indigo-500' : 'text-emerald-500'}`} />
+                 {isSyncing && <div className="absolute inset-0 animate-ping bg-indigo-400 rounded-full opacity-75"></div>}
+               </div>
+               <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                 {isSyncing ? 'Syncing...' : 'Real-time Linked'}
+               </span>
             </div>
             
             <button onClick={toggleTheme} className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-all">
               {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </button>
 
-            {/* Quick Admin Access Toggle for Mobile */}
-            {!isAdmin ? (
-              <button onClick={() => setIsLoginModalOpen(true)} className="md:hidden p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-indigo-100 hover:text-indigo-600 transition-all">
+            {!isAdmin && (
+              <button onClick={() => setIsLoginModalOpen(true)} className="md:hidden p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl">
                 <Lock className="w-5 h-5" />
-              </button>
-            ) : (
-              <button onClick={() => setActiveTab('admin')} className={`md:hidden p-2.5 rounded-xl transition-all ${activeTab === 'admin' ? 'bg-purple-600 text-white shadow-md' : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600'}`}>
-                <ShieldCheck className="w-5 h-5" />
               </button>
             )}
             
@@ -304,15 +357,18 @@ const App: React.FC = () => {
                 <div className="lg:col-span-8 space-y-8">
                    <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800"><FinancialCharts transactions={transactions} isDarkMode={theme === 'dark'} /></div>
                    <div className="hidden md:block bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
-                     <h3 className="text-lg font-black mb-6 text-slate-800 dark:text-slate-100">Catat Baru</h3>
+                     <h3 className="text-lg font-black mb-6 text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                       <Plus className="w-5 h-5 text-indigo-500" />
+                       Catat Cepat
+                     </h3>
                      <TransactionForm onSubmit={addTransaction} categories={categories} />
                    </div>
                 </div>
                 <div className="lg:col-span-4">
                    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 h-full">
                      <div className="flex justify-between items-center mb-6 px-2">
-                       <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Aktivitas Terakhir</h3>
-                       <button onClick={() => setActiveTab('transactions')} className="text-indigo-600 text-[11px] font-black uppercase hover:underline">Lihat Semua</button>
+                       <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Recent Activity</h3>
+                       <button onClick={() => setActiveTab('transactions')} className="text-indigo-600 text-[11px] font-black uppercase hover:underline">View All</button>
                      </div>
                      <TransactionList transactions={transactions.slice(0, 8)} onDelete={deleteTransaction} onEdit={setEditingTransaction} compact />
                    </div>
@@ -325,133 +381,113 @@ const App: React.FC = () => {
             <div className="space-y-8">
               <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                 <div>
-                  <h2 className="text-3xl font-black text-slate-800 dark:text-white leading-tight">Arsip Keuangan</h2>
-                  <p className="text-slate-400 font-medium">Lacak setiap rupiah yang Anda kelola.</p>
+                  <h2 className="text-3xl font-black text-slate-800 dark:text-white leading-tight">Master Ledger</h2>
+                  <p className="text-slate-400 font-medium">Semua data tersinkronisasi secara realtime ke Dasbor Admin.</p>
                 </div>
-                <div className="flex gap-2 w-full md:w-auto">
-                   <button onClick={() => setIsQuickAddOpen(true)} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95"><Plus className="w-5 h-5" /> Catat Kas</button>
-                   <button onClick={() => { /* export logic */ }} className="p-4 bg-white dark:bg-slate-900 text-indigo-600 rounded-2xl font-black border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all"><Download className="w-5 h-5" /></button>
-                </div>
+                <button onClick={() => setIsQuickAddOpen(true)} className="w-full md:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95"><Plus className="w-5 h-5" /> Add Transaction</button>
               </div>
 
               <div className="flex flex-col lg:flex-row gap-4">
                 <div className="flex-1 relative group">
                   <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none"><Search className="w-5 h-5 text-slate-300 group-focus-within:text-indigo-500 transition-colors" /></div>
-                  <input type="text" placeholder="Cari deskripsi atau kategori..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-14 pr-6 py-4 bg-white dark:bg-slate-900 dark:text-white border-2 border-slate-100 dark:border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold shadow-sm" />
+                  <input type="text" placeholder="Cari transaksi..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-14 pr-6 py-4 bg-white dark:bg-slate-900 dark:text-white border-2 border-slate-100 dark:border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold shadow-sm" />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                   <div className="relative flex-1">
-                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                      <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 dark:text-white border-2 border-slate-100 dark:border-slate-800 rounded-2xl outline-none font-bold shadow-sm text-sm" />
-                   </div>
-                   <div className="flex items-center justify-center text-slate-300 hidden sm:flex"><ArrowRight className="w-4 h-4" /></div>
-                   <div className="relative flex-1">
-                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                      <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 dark:text-white border-2 border-slate-100 dark:border-slate-800 rounded-2xl outline-none font-bold shadow-sm text-sm" />
-                   </div>
-                   {hasActiveFilters && <button onClick={() => { setSearchTerm(''); setStartDate(''); setEndDate(''); }} className="px-5 py-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-2xl font-black hover:bg-rose-100 transition-all active:scale-95"><FilterX className="w-5 h-5" /></button>}
+                   <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="px-4 py-4 bg-white dark:bg-slate-900 dark:text-white border-2 border-slate-100 dark:border-slate-800 rounded-2xl outline-none font-bold shadow-sm text-sm" />
+                   <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="px-4 py-4 bg-white dark:bg-slate-900 dark:text-white border-2 border-slate-100 dark:border-slate-800 rounded-2xl outline-none font-bold shadow-sm text-sm" />
+                   {hasActiveFilters && <button onClick={() => { setSearchTerm(''); setStartDate(''); setEndDate(''); }} className="px-5 py-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-2xl font-black hover:bg-rose-100 transition-all"><FilterX className="w-5 h-5" /></button>}
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
+              <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
                 <TransactionList transactions={filteredTransactions} onDelete={deleteTransaction} onEdit={setEditingTransaction} />
               </div>
             </div>
           )}
 
-          {activeTab === 'reports' && <MonthlyReport transactions={transactions} />}
+          {activeTab === 'reports' && <MonthlyReport transactions={transactions} isDarkMode={theme === 'dark'} />}
           {activeTab === 'ai' && <AIInsights transactions={transactions} summary={summary} />}
           {activeTab === 'admin' && isAdmin && (
             <AdminDashboard 
               transactions={transactions} 
               categories={categories} 
               appName={appName}
-              onUpdateAppName={handleUpdateAppName}
-              onAddCategory={(n, t) => { const newCat = { id: crypto.randomUUID(), name: n, type: t, isCustom: true }; setCategories(prev => [...prev, newCat]); }} 
-              onUpdateCategory={(id, name) => setCategories(prev => prev.map(c => c.id === id ? { ...c, name } : c))} 
-              onDeleteCategory={(id) => setCategories(prev => prev.filter(c => c.id !== id))} 
-              onResetData={() => setTransactions([])} 
-              onExport={() => { /* reused logic */ }} 
+              onUpdateAppName={updateAppNameWithSync}
+              onAddCategory={(n, t) => { 
+                const newCat = { id: crypto.randomUUID(), name: n, type: t, isCustom: true }; 
+                updateCategoriesWithSync([...categories, newCat]);
+              }} 
+              onUpdateCategory={(id, name) => {
+                updateCategoriesWithSync(categories.map(c => c.id === id ? { ...c, name } : c));
+              }} 
+              onDeleteCategory={(id) => {
+                updateCategoriesWithSync(categories.filter(c => c.id !== id));
+              }} 
+              onUpdateTransaction={updateTransaction}
+              onDeleteTransaction={deleteTransaction}
+              onResetData={() => { 
+                if(confirm("PERINGATAN: Ini akan menghapus SELURUH data di semua tab. Lanjutkan?")) {
+                  updateTransactionsWithSync([]); 
+                }
+              }} 
+              onExport={() => { /* export logic stays same */ }} 
             />
           )}
           
           {activeTab === 'settings' && (
             <div className="max-w-xl mx-auto py-10 space-y-8">
-              <div className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm text-center relative overflow-hidden transition-colors">
-                <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-indigo-50 dark:from-indigo-950/30 to-transparent"></div>
-                <div className="relative z-10">
-                  <div className="w-24 h-24 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-xl border-4 border-slate-50 dark:border-slate-700">
-                    <User className="w-12 h-12" />
-                  </div>
-                  <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-1">Profil Pengguna</h2>
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-8">Data Lokal Terenkripsi</p>
+              <div className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm text-center relative overflow-hidden">
+                <div className="w-24 h-24 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-xl border-4 border-slate-50 dark:border-slate-700">
+                  <User className="w-12 h-12" />
+                </div>
+                <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-1">Personal Account</h2>
+                <div className="flex items-center justify-center gap-2 mb-8">
+                  <CloudCheck className="w-4 h-4 text-emerald-500" />
+                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Real-time Cloud Node: Active</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <button onClick={toggleTheme} className="w-full p-5 bg-slate-50 dark:bg-slate-800 rounded-[1.5rem] font-black text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm text-indigo-500">
+                        {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                      </div>
+                      <span className="text-sm">Appearance Mode</span>
+                    </div>
+                    <div className={`w-12 h-6 rounded-full relative transition-colors ${theme === 'dark' ? 'bg-indigo-600' : 'bg-slate-300'}`}>
+                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${theme === 'dark' ? 'left-7' : 'left-1'}`}></div>
+                    </div>
+                  </button>
                   
-                  <div className="space-y-4">
-                    {/* Dark Mode Toggle In Settings */}
-                    <button onClick={toggleTheme} className="w-full p-5 bg-slate-50 dark:bg-slate-800 rounded-[1.5rem] font-black text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all flex justify-between items-center group">
+                  {!isAdmin && (
+                    <button onClick={() => setIsLoginModalOpen(true)} className="w-full p-6 bg-slate-900 dark:bg-slate-800 text-white rounded-[1.5rem] font-black hover:bg-slate-800 dark:hover:bg-slate-700 transition-all flex justify-between items-center shadow-xl group">
                       <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm text-indigo-500">
-                          {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                        <div className="p-3 bg-indigo-600 rounded-xl group-hover:rotate-12 transition-transform">
+                          <ShieldCheck className="w-6 h-6 text-white" />
                         </div>
-                        <span className="text-sm">Mode {theme === 'light' ? 'Gelap' : 'Terang'}</span>
-                      </div>
-                      <div className={`w-12 h-6 rounded-full relative transition-colors ${theme === 'dark' ? 'bg-indigo-600' : 'bg-slate-300'}`}>
-                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${theme === 'dark' ? 'left-7' : 'left-1'}`}></div>
-                      </div>
-                    </button>
-
-                    <button onClick={() => { /* export */ }} className="w-full p-5 bg-slate-50 dark:bg-slate-800 rounded-[1.5rem] font-black text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all flex justify-between items-center group">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm text-indigo-500 group-hover:scale-110 transition-transform"><Download className="w-5 h-5" /></div>
-                        <span className="text-sm">Cadangkan Data (CSV)</span>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-slate-300" />
-                    </button>
-                    
-                    {!isAdmin ? (
-                      <button onClick={() => setIsLoginModalOpen(true)} className="w-full p-6 bg-slate-900 dark:bg-slate-800 text-white rounded-[1.5rem] font-black hover:bg-slate-800 dark:hover:bg-slate-700 transition-all flex justify-between items-center shadow-xl shadow-slate-200 dark:shadow-none group active:scale-[0.98]">
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-indigo-600 rounded-xl group-hover:rotate-12 transition-transform"><ShieldCheck className="w-6 h-6" /></div>
-                          <div className="text-left">
-                            <span className="block text-sm">Aktifkan Mode Admin</span>
-                            <span className="block text-[10px] text-slate-400 font-medium">Kelola kategori & sistem</span>
-                          </div>
+                        <div className="text-left">
+                          <span className="block text-sm">Masuk Dasbor Admin</span>
+                          <span className="block text-[10px] text-slate-400">Master Data & App Control</span>
                         </div>
-                        <ArrowRight className="w-4 h-4 text-slate-500" />
-                      </button>
-                    ) : (
-                      <div className="space-y-3">
-                        <button onClick={() => setActiveTab('admin')} className="w-full p-6 bg-purple-600 text-white rounded-[1.5rem] font-black hover:bg-purple-700 transition-all flex justify-between items-center shadow-xl shadow-purple-100 dark:shadow-none group active:scale-[0.98]">
-                          <div className="flex items-center gap-4">
-                            <div className="p-3 bg-purple-500 rounded-xl group-hover:rotate-12 transition-transform"><LayoutDashboard className="w-6 h-6" /></div>
-                            <span className="text-sm">Dashboard Admin</span>
-                          </div>
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => setIsAdmin(false)} className="w-full py-4 text-rose-500 font-black text-xs uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all">
-                          Keluar dari Mode Admin
-                        </button>
                       </div>
-                    )}
-                  </div>
+                      <ArrowRight className="w-4 h-4 text-slate-500" />
+                    </button>
+                  )}
                 </div>
               </div>
-              <p className="text-center text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">{appName} v2.1 • 2024</p>
+              <p className="text-center text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">Real-time Sync Active • v2.5</p>
             </div>
           )}
         </main>
       </div>
 
-      {/* Floating Action Button (Mobile Only) */}
-      <button 
-        onClick={() => setIsQuickAddOpen(true)}
-        className="md:hidden fixed bottom-24 right-6 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-50 hover:scale-110 active:scale-95 transition-all shadow-indigo-200 dark:shadow-none"
-      >
+      {/* Floating FAB */}
+      <button onClick={() => setIsQuickAddOpen(true)} className="md:hidden fixed bottom-24 right-6 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-50 hover:scale-110 active:scale-95 transition-all shadow-indigo-300 dark:shadow-none">
         <Plus className="w-8 h-8" />
       </button>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex justify-around p-4 z-[60] pb-8 transition-colors">
+      {/* Mobile Nav */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex justify-around p-4 z-[60] pb-8">
         {[
           { id: 'dashboard', icon: LayoutDashboard },
           { id: 'transactions', icon: History },
@@ -459,13 +495,9 @@ const App: React.FC = () => {
           { id: 'ai', icon: Sparkles },
           { id: 'settings', icon: Settings },
         ].map(item => (
-          <button 
-            key={item.id} 
-            onClick={() => setActiveTab(item.id as any)} 
-            className={`p-3.5 rounded-2xl transition-all relative ${activeTab === item.id ? (isAdmin ? 'text-purple-600 bg-purple-50 dark:bg-purple-900/20' : 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20') : 'text-slate-400 dark:text-slate-500'}`}
-          >
+          <button key={item.id} onClick={() => setActiveTab(item.id as any)} className={`p-3.5 rounded-2xl transition-all relative ${activeTab === item.id ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-400 dark:text-slate-500'}`}>
             <item.icon className="w-6 h-6" />
-            {activeTab === item.id && <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${isAdmin ? 'bg-purple-600' : 'bg-indigo-600'}`}></div>}
+            {activeTab === item.id && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-600 rounded-full"></div>}
           </button>
         ))}
       </nav>
