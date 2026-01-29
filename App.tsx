@@ -27,7 +27,6 @@ const DEFAULT_CATEGORIES: Category[] = [
   { id: '8', name: 'Hiburan', type: TransactionType.EXPENSE, isCustom: false },
 ];
 
-// Initialize BroadcastChannel for ultra-fast tab syncing
 const syncChannel = new BroadcastChannel('finance_sync_channel');
 
 const App: React.FC = () => {
@@ -39,19 +38,16 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isSyncing, setIsSyncing] = useState(false);
   
-  // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Modals
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
-  // Load Data Function
   const loadData = () => {
     const savedTransactions = localStorage.getItem('jejaklangkah_data');
     const savedCategories = localStorage.getItem('jejaklangkah_categories');
@@ -75,7 +71,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Broadcast function
   const broadcastChange = (type: string) => {
     syncChannel.postMessage({ type, timestamp: Date.now() });
   };
@@ -83,15 +78,12 @@ const App: React.FC = () => {
   useEffect(() => {
     loadData();
 
-    // Listen for changes from OTHER tabs via BroadcastChannel (Faster than StorageEvent)
     syncChannel.onmessage = (event) => {
       setIsSyncing(true);
       loadData();
-      // Provide visual feedback for the sync
       setTimeout(() => setIsSyncing(false), 1500);
     };
 
-    // Fallback listener for legacy browsers
     const handleStorageChange = (e: StorageEvent) => {
       const keysToSync = ['jejaklangkah_data', 'jejaklangkah_categories', 'jejaklangkah_app_name', 'jejaklangkah_theme'];
       if (keysToSync.includes(e.key || '')) {
@@ -107,7 +99,6 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Persist State Changes and Broadcast to other tabs
   const updateTransactionsWithSync = (newTransactions: Transaction[]) => {
     setTransactions(newTransactions);
     localStorage.setItem('jejaklangkah_data', JSON.stringify(newTransactions));
@@ -150,7 +141,7 @@ const App: React.FC = () => {
   };
 
   const deleteTransaction = (id: string) => {
-    if (window.confirm("Hapus catatan ini?")) {
+    if (window.confirm("Hapus catatan ini secara permanen?")) {
       updateTransactionsWithSync(transactions.filter(t => t.id !== id));
     }
   };
@@ -202,7 +193,6 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row font-['Plus_Jakarta_Sans'] transition-colors duration-300">
       
-      {/* Realtime Sync Overlay Indicator */}
       {isSyncing && (
         <div className="fixed top-24 right-6 z-[110] animate-fadeIn">
           <div className="flex items-center gap-3 px-4 py-2 bg-indigo-600 text-white rounded-full shadow-2xl border border-indigo-400">
@@ -212,7 +202,6 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Modals & Forms */}
       {(isQuickAddOpen || editingTransaction) && (
         <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => { setIsQuickAddOpen(false); setEditingTransaction(null); }}></div>
@@ -236,7 +225,6 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Login Modal */}
       {isLoginModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsLoginModalOpen(false)}></div>
@@ -266,7 +254,6 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Sidebar */}
       <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-72 bg-slate-900 dark:bg-slate-950 text-white p-8 z-50 border-r border-slate-800/50">
         <div className="flex items-center gap-4 mb-12">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg"><Wallet className="w-6 h-6" /></div>
@@ -306,7 +293,6 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Container */}
       <div className="flex-1 md:ml-72 flex flex-col min-h-screen">
         <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-6 md:px-12 py-4 sticky top-0 z-40 flex justify-between items-center h-16 md:h-20 transition-colors">
           <div className="flex items-center gap-3">
@@ -370,7 +356,13 @@ const App: React.FC = () => {
                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Recent Activity</h3>
                        <button onClick={() => setActiveTab('transactions')} className="text-indigo-600 text-[11px] font-black uppercase hover:underline">View All</button>
                      </div>
-                     <TransactionList transactions={transactions.slice(0, 8)} onDelete={deleteTransaction} onEdit={setEditingTransaction} compact />
+                     <TransactionList 
+                      transactions={transactions.slice(0, 8)} 
+                      onDelete={deleteTransaction} 
+                      onEdit={setEditingTransaction} 
+                      compact 
+                      showActions={isAdmin} // Restricted to admin
+                     />
                    </div>
                 </div>
               </div>
@@ -400,7 +392,12 @@ const App: React.FC = () => {
               </div>
 
               <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
-                <TransactionList transactions={filteredTransactions} onDelete={deleteTransaction} onEdit={setEditingTransaction} />
+                <TransactionList 
+                  transactions={filteredTransactions} 
+                  onDelete={deleteTransaction} 
+                  onEdit={setEditingTransaction} 
+                  showActions={isAdmin} // Restricted to admin
+                />
               </div>
             </div>
           )}
@@ -423,14 +420,14 @@ const App: React.FC = () => {
               onDeleteCategory={(id) => {
                 updateCategoriesWithSync(categories.filter(c => c.id !== id));
               }} 
-              onUpdateTransaction={updateTransaction}
+              onUpdateTransaction={setEditingTransaction} // Hook back to the main app's edit modal
               onDeleteTransaction={deleteTransaction}
               onResetData={() => { 
                 if(confirm("PERINGATAN: Ini akan menghapus SELURUH data di semua tab. Lanjutkan?")) {
                   updateTransactionsWithSync([]); 
                 }
               }} 
-              onExport={() => { /* export logic stays same */ }} 
+              onExport={() => {}} 
             />
           )}
           
@@ -475,18 +472,16 @@ const App: React.FC = () => {
                   )}
                 </div>
               </div>
-              <p className="text-center text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">Real-time Sync Active • v2.5</p>
+              <p className="text-center text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">Real-time Sync Active • v2.6</p>
             </div>
           )}
         </main>
       </div>
 
-      {/* Floating FAB */}
       <button onClick={() => setIsQuickAddOpen(true)} className="md:hidden fixed bottom-24 right-6 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-50 hover:scale-110 active:scale-95 transition-all shadow-indigo-300 dark:shadow-none">
         <Plus className="w-8 h-8" />
       </button>
 
-      {/* Mobile Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex justify-around p-4 z-[60] pb-8">
         {[
           { id: 'dashboard', icon: LayoutDashboard },

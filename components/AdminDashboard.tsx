@@ -8,8 +8,7 @@ import {
   Download, Activity, BarChart, 
   Settings2, Info, Save, CheckCircle2,
   Layout, Globe, RefreshCw, ListFilter,
-  ArrowRightCircle, Edit3, CloudLightning,
-  Pulse
+  ArrowRightCircle, Edit3, CloudLightning
 } from 'lucide-react';
 
 interface Props {
@@ -20,7 +19,7 @@ interface Props {
   onAddCategory: (name: string, type: TransactionType) => void;
   onUpdateCategory: (id: string, name: string) => void;
   onDeleteCategory: (id: string) => void;
-  onUpdateTransaction: (t: Transaction) => void;
+  onUpdateTransaction: (t: Transaction) => void; // Used to trigger the edit modal
   onDeleteTransaction: (id: string) => void;
   onResetData: () => void;
   onExport: () => void;
@@ -63,7 +62,6 @@ const AdminDashboard: React.FC<Props> = ({
   const handleSaveSettings = () => {
     if (!tempAppName.trim()) return;
     setIsSaving(true);
-    // Simulate push delay
     setTimeout(() => {
       onUpdateAppName(tempAppName);
       setIsSaving(false);
@@ -74,7 +72,6 @@ const AdminDashboard: React.FC<Props> = ({
 
   return (
     <div className="space-y-8 animate-fadeIn pb-20">
-      {/* Header Admin with Real-time Status */}
       <div className="bg-slate-900 dark:bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden transition-all duration-500">
         <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div className="space-y-2">
@@ -112,7 +109,6 @@ const AdminDashboard: React.FC<Props> = ({
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 blur-[100px] -z-10 rounded-full"></div>
       </div>
 
-      {/* Stats Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Master Logs', value: stats.totalTransactions, icon: Database, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
@@ -165,16 +161,6 @@ const AdminDashboard: React.FC<Props> = ({
                     Perubahan ini akan langsung terupdate di semua tab pengguna secara instan.
                   </p>
                 </div>
-                <div className="space-y-2 opacity-60">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Shard Node Status</label>
-                  <div className="w-full px-6 py-5 bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-[1.5rem] font-black text-slate-500 flex items-center justify-between">
-                    <span>Cluster-ID: JL-7742</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
-                      <span className="text-[10px] uppercase">Active</span>
-                    </div>
-                  </div>
-                </div>
               </div>
               
               <button 
@@ -196,12 +182,6 @@ const AdminDashboard: React.FC<Props> = ({
 
           {activeAdminView === 'categories' && (
             <div className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 animate-fadeIn">
-              <div className="mb-8">
-                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-3">
-                  <Settings2 className="w-6 h-6 text-purple-500" /> Master Schema Manager
-                </h3>
-                <p className="text-xs text-slate-400 font-bold uppercase mt-1">Konfigurasi kategori transaksi sistem</p>
-              </div>
               <CategoryManager categories={categories} onAdd={onAddCategory} onUpdate={onUpdateCategory} onDelete={onDeleteCategory} />
             </div>
           )}
@@ -213,11 +193,7 @@ const AdminDashboard: React.FC<Props> = ({
                   <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-3">
                     <Database className="w-6 h-6 text-indigo-500" /> Central Transaction Ledger
                   </h3>
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Akses root untuk seluruh data histori</p>
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
-                  <ListFilter className="w-4 h-4 text-slate-400" />
-                  <span className="text-[10px] font-black text-slate-500 uppercase">Filters</span>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Akses root (Edit & Hapus) untuk seluruh data</p>
                 </div>
               </div>
               
@@ -226,13 +202,13 @@ const AdminDashboard: React.FC<Props> = ({
                   transactions={transactions} 
                   onDelete={onDeleteTransaction} 
                   onEdit={onUpdateTransaction} 
+                  showActions={true} // Always allow edit here in Admin view
                 />
               </div>
             </div>
           )}
         </div>
 
-        {/* Action Sidebar */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-rose-50 dark:bg-rose-950/10 p-8 rounded-[2.5rem] border border-rose-100 dark:border-rose-900/30">
             <div className="flex items-center gap-3 mb-4 text-rose-800 dark:text-rose-400">
@@ -242,9 +218,9 @@ const AdminDashboard: React.FC<Props> = ({
               <h3 className="font-black uppercase tracking-tight">Database Purge</h3>
             </div>
             <p className="text-[11px] text-rose-600 dark:text-rose-500 mb-6 font-bold leading-relaxed">
-              Tindakan destruktif: Menghapus seluruh data dari semua client yang terhubung secara permanen.
+              Tindakan destruktif: Menghapus seluruh data dari semua client secara permanen.
             </p>
-            <button onClick={onResetData} className="w-full py-5 bg-white dark:bg-slate-900 border-2 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all duration-300 shadow-xl shadow-rose-100 dark:shadow-none">
+            <button onClick={onResetData} className="w-full py-5 bg-white dark:bg-slate-900 border-2 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all duration-300">
               Execute Master Reset
             </button>
           </div>
@@ -257,24 +233,10 @@ const AdminDashboard: React.FC<Props> = ({
                  </div>
                  <h4 className="text-xs font-black text-white uppercase tracking-widest">Ledger Export</h4>
                </div>
-               <p className="text-[11px] text-slate-400 mb-8 font-medium leading-relaxed">
-                 Generate salinan lengkap database sistem dalam format CSV terstruktur.
-               </p>
-               <button onClick={onExport} className="w-full py-5 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all duration-300 active:scale-95">
+               <button onClick={onExport} className="w-full py-5 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all duration-300">
                  Generate Master CSV
                </button>
              </div>
-             <Database className="absolute -right-6 -bottom-6 w-32 h-32 text-indigo-500/10 group-hover:scale-110 transition-transform duration-700" />
-          </div>
-
-          <div className="p-8 rounded-[2.5rem] bg-indigo-600 text-white shadow-2xl shadow-indigo-200 dark:shadow-none flex flex-col items-center text-center">
-             <Activity className="w-12 h-12 mb-4 animate-pulse" />
-             <h4 className="text-lg font-black mb-1">System Health</h4>
-             <p className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest mb-6">Real-time Node: Online</p>
-             <div className="w-full h-1.5 bg-indigo-800 rounded-full overflow-hidden">
-               <div className="w-3/4 h-full bg-white rounded-full"></div>
-             </div>
-             <p className="text-[9px] text-indigo-200 mt-2 font-bold uppercase">Memory Usage: 42% Optimized</p>
           </div>
         </div>
       </div>

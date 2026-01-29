@@ -15,53 +15,43 @@ interface Props {
   onDelete: (id: string) => void;
   onEdit: (transaction: Transaction) => void;
   compact?: boolean;
+  showActions?: boolean; // New prop to control access
 }
 
 const getCategoryIcon = (category: string) => {
   const cat = category.toLowerCase();
   
-  // Food & Beverage
   if (cat.includes('makan') || cat.includes('restoran') || cat.includes('warung') || cat.includes('jajan')) return <Utensils className="w-5 h-5" />;
   if (cat.includes('kopi') || cat.includes('cafe') || cat.includes('minum') || cat.includes('teh')) return <Coffee className="w-5 h-5" />;
-  
-  // Transport
   if (cat.includes('transpor') || cat.includes('bensin') || cat.includes('mobil') || cat.includes('motor') || cat.includes('parkir') || cat.includes('ojek') || cat.includes('grab') || cat.includes('gojek')) return <Car className="w-5 h-5" />;
-  
-  // Shopping
   if (cat.includes('belanja') || cat.includes('mall') || cat.includes('pasar') || cat.includes('pakaian') || cat.includes('baju')) return <ShoppingBag className="w-5 h-5" />;
   if (cat.includes('groceries') || cat.includes('supermarket') || cat.includes('toko')) return <ShoppingCart className="w-5 h-5" />;
-  
-  // Bills & Utilities
   if (cat.includes('tagihan') || cat.includes('listrik') || cat.includes('air') || cat.includes('internet') || cat.includes('wifi') || cat.includes('pulsa')) return <Zap className="w-5 h-5" />;
   if (cat.includes('cicilan') || cat.includes('hutang') || cat.includes('kartu kredit')) return <CreditCard className="w-5 h-5" />;
-  
-  // Living
   if (cat.includes('rumah') || cat.includes('kost') || cat.includes('sewa') || cat.includes('apartemen') || cat.includes('perabot')) return <Home className="w-5 h-5" />;
-  
-  // Entertainment & Lifestyle
   if (cat.includes('hiburan') || cat.includes('bioskop') || cat.includes('nonton') || cat.includes('streaming') || cat.includes('film')) return <Music className="w-5 h-5" />;
   if (cat.includes('game') || cat.includes('main') || cat.includes('hobi')) return <Gamepad className="w-5 h-5" />;
   if (cat.includes('gym') || cat.includes('olahraga') || cat.includes('sehat')) return <Dumbbell className="w-5 h-5" />;
   if (cat.includes('gadget') || cat.includes('hp') || cat.includes('laptop') || cat.includes('elektronik')) return <Smartphone className="w-5 h-5" />;
-  
-  // Health & Education
   if (cat.includes('sakit') || cat.includes('obat') || cat.includes('rs') || cat.includes('dokter') || cat.includes('medis')) return <Heart className="w-5 h-5" />;
   if (cat.includes('didik') || cat.includes('sekolah') || cat.includes('kuliah') || cat.includes('buku') || cat.includes('kursus')) return <GraduationCap className="w-5 h-5" />;
-  
-  // Income & Finance
   if (cat.includes('gaji') || cat.includes('kerja') || cat.includes('upah') || cat.includes('salary')) return <Briefcase className="w-5 h-5" />;
   if (cat.includes('invest') || cat.includes('saham') || cat.includes('crypto') || cat.includes('reksadana')) return <TrendingUp className="w-5 h-5" />;
   if (cat.includes('bonus') || cat.includes('thr') || cat.includes('insentif')) return <Coins className="w-5 h-5" />;
   if (cat.includes('hadiah') || cat.includes('kado') || cat.includes('donasi')) return <Gift className="w-5 h-5" />;
-  
-  // Travel & Security
   if (cat.includes('travel') || cat.includes('liburan') || cat.includes('pesawat') || cat.includes('hotel') || cat.includes('tiket')) return <Plane className="w-5 h-5" />;
   if (cat.includes('asuransi') || cat.includes('proteksi')) return <Shield className="w-5 h-5" />;
   
   return <Tag className="w-5 h-5" />;
 };
 
-const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdit, compact = false }) => {
+const TransactionList: React.FC<Props> = ({ 
+  transactions, 
+  onDelete, 
+  onEdit, 
+  compact = false,
+  showActions = true // Enabled by default for backward compatibility but controlled in App.tsx
+}) => {
   if (transactions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-600 bg-slate-50/50 dark:bg-slate-800/20 rounded-3xl border-2 border-dashed border-slate-100 dark:border-slate-800 transition-colors">
@@ -93,9 +83,11 @@ const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdit, comp
                 <th scope="col" className="px-6 py-4 text-right text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
                   Jumlah
                 </th>
-                <th scope="col" className="px-6 py-4 text-right text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
-                  Aksi
-                </th>
+                {showActions && (
+                  <th scope="col" className="px-6 py-4 text-right text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+                    Aksi
+                  </th>
+                )}
               </tr>
             </thead>
           )}
@@ -143,24 +135,26 @@ const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdit, comp
                     {t.type === TransactionType.INCOME ? '+' : '-'} Rp {t.amount.toLocaleString('id-ID')}
                   </p>
                 </td>
-                <td className="px-6 py-5 text-right whitespace-nowrap">
-                  <div className="flex justify-end gap-1">
-                    <button 
-                      onClick={() => onEdit(t)}
-                      className="p-3 text-slate-300 dark:text-slate-600 hover:text-indigo-500 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-2xl transition-all active:scale-90"
-                      title="Edit Transaksi"
-                    >
-                      <Edit3 className="w-5 h-5" />
-                    </button>
-                    <button 
-                      onClick={() => onDelete(t.id)}
-                      className="p-3 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all active:scale-90"
-                      title="Hapus Transaksi"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                </td>
+                {showActions && (
+                  <td className="px-6 py-5 text-right whitespace-nowrap">
+                    <div className="flex justify-end gap-1">
+                      <button 
+                        onClick={() => onEdit(t)}
+                        className="p-3 text-slate-300 dark:text-slate-600 hover:text-indigo-500 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-2xl transition-all active:scale-90"
+                        title="Edit Transaksi (Admin Only)"
+                      >
+                        <Edit3 className="w-5 h-5" />
+                      </button>
+                      <button 
+                        onClick={() => onDelete(t.id)}
+                        className="p-3 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all active:scale-90"
+                        title="Hapus Transaksi (Admin Only)"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
