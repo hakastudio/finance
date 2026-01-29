@@ -6,7 +6,10 @@ import {
   ArrowUpCircle, ArrowDownCircle, 
   Coffee, Car, ShoppingBag, CreditCard, 
   Gift, Heart, GraduationCap, Briefcase, 
-  PlusCircle, LayoutGrid
+  PlusCircle, LayoutGrid, Utensils, 
+  Zap, Music, Gamepad, Smartphone, 
+  TrendingUp, Dumbbell, Plane, Coins, 
+  Shield, ShoppingCart, Home
 } from 'lucide-react';
 
 interface Props {
@@ -17,15 +20,46 @@ interface Props {
 }
 
 const getCategoryIcon = (name: string) => {
-  const n = name.toLowerCase();
-  if (n.includes('makan') || n.includes('kopi')) return <Coffee className="w-5 h-5" />;
-  if (n.includes('transpor') || n.includes('bensin') || n.includes('mobil') || n.includes('motor')) return <Car className="w-5 h-5" />;
-  if (n.includes('belanja') || n.includes('mall')) return <ShoppingBag className="w-5 h-5" />;
-  if (n.includes('tagihan') || n.includes('listrik') || n.includes('air')) return <CreditCard className="w-5 h-5" />;
-  if (n.includes('hadiah') || n.includes('kado')) return <Gift className="w-5 h-5" />;
-  if (n.includes('sehat') || n.includes('obat') || n.includes('rs')) return <Heart className="w-5 h-5" />;
-  if (n.includes('didik') || n.includes('sekolah') || n.includes('kuliah')) return <GraduationCap className="w-5 h-5" />;
-  if (n.includes('gaji') || n.includes('kerja') || n.includes('bonus')) return <Briefcase className="w-5 h-5" />;
+  const cat = name.toLowerCase();
+  
+  // Food & Beverage
+  if (cat.includes('makan') || cat.includes('restoran') || cat.includes('warung') || cat.includes('jajan')) return <Utensils className="w-5 h-5" />;
+  if (cat.includes('kopi') || cat.includes('cafe') || cat.includes('minum') || cat.includes('teh')) return <Coffee className="w-5 h-5" />;
+  
+  // Transport
+  if (cat.includes('transpor') || cat.includes('bensin') || cat.includes('mobil') || cat.includes('motor') || cat.includes('parkir') || cat.includes('ojek') || cat.includes('grab') || cat.includes('gojek')) return <Car className="w-5 h-5" />;
+  
+  // Shopping
+  if (cat.includes('belanja') || cat.includes('mall') || cat.includes('pasar') || cat.includes('pakaian') || cat.includes('baju')) return <ShoppingBag className="w-5 h-5" />;
+  if (cat.includes('groceries') || cat.includes('supermarket') || cat.includes('toko')) return <ShoppingCart className="w-5 h-5" />;
+  
+  // Bills & Utilities
+  if (cat.includes('tagihan') || cat.includes('listrik') || cat.includes('air') || cat.includes('internet') || cat.includes('wifi') || cat.includes('pulsa')) return <Zap className="w-5 h-5" />;
+  if (cat.includes('cicilan') || cat.includes('hutang') || cat.includes('kartu kredit')) return <CreditCard className="w-5 h-5" />;
+  
+  // Living
+  if (cat.includes('rumah') || cat.includes('kost') || cat.includes('sewa') || cat.includes('apartemen') || cat.includes('perabot')) return <Home className="w-5 h-5" />;
+  
+  // Entertainment & Lifestyle
+  if (cat.includes('hiburan') || cat.includes('bioskop') || cat.includes('nonton') || cat.includes('streaming') || cat.includes('film')) return <Music className="w-5 h-5" />;
+  if (cat.includes('game') || cat.includes('main') || cat.includes('hobi')) return <Gamepad className="w-5 h-5" />;
+  if (cat.includes('gym') || cat.includes('olahraga') || cat.includes('sehat')) return <Dumbbell className="w-5 h-5" />;
+  if (cat.includes('gadget') || cat.includes('hp') || cat.includes('laptop') || cat.includes('elektronik')) return <Smartphone className="w-5 h-5" />;
+  
+  // Health & Education
+  if (cat.includes('sakit') || cat.includes('obat') || cat.includes('rs') || cat.includes('dokter') || cat.includes('medis')) return <Heart className="w-5 h-5" />;
+  if (cat.includes('didik') || cat.includes('sekolah') || cat.includes('kuliah') || cat.includes('buku') || cat.includes('kursus')) return <GraduationCap className="w-5 h-5" />;
+  
+  // Income & Finance
+  if (cat.includes('gaji') || cat.includes('kerja') || cat.includes('upah') || cat.includes('salary')) return <Briefcase className="w-5 h-5" />;
+  if (cat.includes('invest') || cat.includes('saham') || cat.includes('crypto') || cat.includes('reksadana')) return <TrendingUp className="w-5 h-5" />;
+  if (cat.includes('bonus') || cat.includes('thr') || cat.includes('insentif')) return <Coins className="w-5 h-5" />;
+  if (cat.includes('hadiah') || cat.includes('kado') || cat.includes('donasi')) return <Gift className="w-5 h-5" />;
+  
+  // Travel & Security
+  if (cat.includes('travel') || cat.includes('liburan') || cat.includes('pesawat') || cat.includes('hotel') || cat.includes('tiket')) return <Plane className="w-5 h-5" />;
+  if (cat.includes('asuransi') || cat.includes('proteksi')) return <Shield className="w-5 h-5" />;
+  
   return <Tag className="w-5 h-5" />;
 };
 
@@ -76,7 +110,7 @@ const CategoryManager: React.FC<Props> = ({ categories, onAdd, onUpdate, onDelet
         </button>
         <button
           onClick={() => setActiveType(TransactionType.INCOME)}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-200 ${activeType === TransactionType.INCOME ? 'bg-white shadow-md text-green-600 font-black' : 'text-slate-500 font-bold hover:text-slate-700'}`}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-200 ${activeType === TransactionType.INCOME ? 'bg-white shadow-md text-emerald-600 font-black' : 'text-slate-500 font-bold hover:text-slate-700'}`}
         >
           <ArrowUpCircle className="w-5 h-5" />
           Pemasukan
@@ -165,7 +199,7 @@ const CategoryManager: React.FC<Props> = ({ categories, onAdd, onUpdate, onDelet
                 ) : (
                   <>
                     <div className="flex items-start justify-between mb-4">
-                      <div className={`p-4 rounded-2xl shadow-inner ${activeType === TransactionType.INCOME ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                      <div className={`p-4 rounded-2xl shadow-inner ${cat.type === TransactionType.INCOME ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
                         {getCategoryIcon(cat.name)}
                       </div>
                       {!cat.isCustom && (

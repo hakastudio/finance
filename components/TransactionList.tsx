@@ -4,7 +4,10 @@ import { Transaction, TransactionType } from '../types';
 import { 
   Trash2, ShoppingBag, Car, CreditCard, 
   Gift, Heart, GraduationCap, Briefcase, 
-  Tag, Utensils, Edit3
+  Tag, Utensils, Edit3, Coffee, Home, 
+  Zap, Music, Gamepad, Smartphone, 
+  TrendingUp, Dumbbell, Plane, Coins, 
+  Shield, ShoppingCart
 } from 'lucide-react';
 
 interface Props {
@@ -16,14 +19,45 @@ interface Props {
 
 const getCategoryIcon = (category: string) => {
   const cat = category.toLowerCase();
-  if (cat.includes('makan') || cat.includes('kopi') || cat.includes('minum')) return <Utensils className="w-5 h-5" />;
-  if (cat.includes('transpor') || cat.includes('bensin') || cat.includes('mobil') || cat.includes('motor')) return <Car className="w-5 h-5" />;
-  if (cat.includes('belanja') || cat.includes('mall') || cat.includes('pasar')) return <ShoppingBag className="w-5 h-5" />;
-  if (cat.includes('tagihan') || cat.includes('listrik') || cat.includes('air') || cat.includes('internet')) return <CreditCard className="w-5 h-5" />;
+  
+  // Food & Beverage
+  if (cat.includes('makan') || cat.includes('restoran') || cat.includes('warung') || cat.includes('jajan')) return <Utensils className="w-5 h-5" />;
+  if (cat.includes('kopi') || cat.includes('cafe') || cat.includes('minum') || cat.includes('teh')) return <Coffee className="w-5 h-5" />;
+  
+  // Transport
+  if (cat.includes('transpor') || cat.includes('bensin') || cat.includes('mobil') || cat.includes('motor') || cat.includes('parkir') || cat.includes('ojek') || cat.includes('grab') || cat.includes('gojek')) return <Car className="w-5 h-5" />;
+  
+  // Shopping
+  if (cat.includes('belanja') || cat.includes('mall') || cat.includes('pasar') || cat.includes('pakaian') || cat.includes('baju')) return <ShoppingBag className="w-5 h-5" />;
+  if (cat.includes('groceries') || cat.includes('supermarket') || cat.includes('toko')) return <ShoppingCart className="w-5 h-5" />;
+  
+  // Bills & Utilities
+  if (cat.includes('tagihan') || cat.includes('listrik') || cat.includes('air') || cat.includes('internet') || cat.includes('wifi') || cat.includes('pulsa')) return <Zap className="w-5 h-5" />;
+  if (cat.includes('cicilan') || cat.includes('hutang') || cat.includes('kartu kredit')) return <CreditCard className="w-5 h-5" />;
+  
+  // Living
+  if (cat.includes('rumah') || cat.includes('kost') || cat.includes('sewa') || cat.includes('apartemen') || cat.includes('perabot')) return <Home className="w-5 h-5" />;
+  
+  // Entertainment & Lifestyle
+  if (cat.includes('hiburan') || cat.includes('bioskop') || cat.includes('nonton') || cat.includes('streaming') || cat.includes('film')) return <Music className="w-5 h-5" />;
+  if (cat.includes('game') || cat.includes('main') || cat.includes('hobi')) return <Gamepad className="w-5 h-5" />;
+  if (cat.includes('gym') || cat.includes('olahraga') || cat.includes('sehat')) return <Dumbbell className="w-5 h-5" />;
+  if (cat.includes('gadget') || cat.includes('hp') || cat.includes('laptop') || cat.includes('elektronik')) return <Smartphone className="w-5 h-5" />;
+  
+  // Health & Education
+  if (cat.includes('sakit') || cat.includes('obat') || cat.includes('rs') || cat.includes('dokter') || cat.includes('medis')) return <Heart className="w-5 h-5" />;
+  if (cat.includes('didik') || cat.includes('sekolah') || cat.includes('kuliah') || cat.includes('buku') || cat.includes('kursus')) return <GraduationCap className="w-5 h-5" />;
+  
+  // Income & Finance
+  if (cat.includes('gaji') || cat.includes('kerja') || cat.includes('upah') || cat.includes('salary')) return <Briefcase className="w-5 h-5" />;
+  if (cat.includes('invest') || cat.includes('saham') || cat.includes('crypto') || cat.includes('reksadana')) return <TrendingUp className="w-5 h-5" />;
+  if (cat.includes('bonus') || cat.includes('thr') || cat.includes('insentif')) return <Coins className="w-5 h-5" />;
   if (cat.includes('hadiah') || cat.includes('kado') || cat.includes('donasi')) return <Gift className="w-5 h-5" />;
-  if (cat.includes('sehat') || cat.includes('obat') || cat.includes('rs')) return <Heart className="w-5 h-5" />;
-  if (cat.includes('didik') || cat.includes('sekolah') || cat.includes('kuliah') || cat.includes('buku')) return <GraduationCap className="w-5 h-5" />;
-  if (cat.includes('gaji') || cat.includes('kerja') || cat.includes('bonus')) return <Briefcase className="w-5 h-5" />;
+  
+  // Travel & Security
+  if (cat.includes('travel') || cat.includes('liburan') || cat.includes('pesawat') || cat.includes('hotel') || cat.includes('tiket')) return <Plane className="w-5 h-5" />;
+  if (cat.includes('asuransi') || cat.includes('proteksi')) return <Shield className="w-5 h-5" />;
+  
   return <Tag className="w-5 h-5" />;
 };
 
@@ -72,8 +106,8 @@ const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdit, comp
                   <div className="flex items-center gap-4">
                     <div className={`flex-shrink-0 p-3 rounded-2xl shadow-sm ${
                       t.type === TransactionType.INCOME 
-                        ? 'bg-green-100 text-green-600' 
-                        : 'bg-red-100 text-red-600'
+                        ? 'bg-emerald-100 text-emerald-600' 
+                        : 'bg-rose-100 text-rose-600'
                     }`}>
                       {getCategoryIcon(t.category)}
                     </div>
@@ -81,7 +115,7 @@ const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdit, comp
                       <p className="text-base font-black text-slate-900 leading-none mb-1.5">{t.description}</p>
                       <div className="flex items-center gap-2 md:hidden">
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${
-                          t.type === TransactionType.INCOME ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                          t.type === TransactionType.INCOME ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
                         }`}>
                           {t.category}
                         </span>
@@ -104,7 +138,7 @@ const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdit, comp
                 )}
                 <td className="px-6 py-5 text-right whitespace-nowrap">
                   <p className={`text-lg font-black ${
-                    t.type === TransactionType.INCOME ? 'text-green-600' : 'text-red-600'
+                    t.type === TransactionType.INCOME ? 'text-emerald-600' : 'text-rose-600'
                   }`}>
                     {t.type === TransactionType.INCOME ? '+' : '-'} Rp {t.amount.toLocaleString('id-ID')}
                   </p>
