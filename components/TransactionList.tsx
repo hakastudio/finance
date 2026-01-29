@@ -64,8 +64,8 @@ const getCategoryIcon = (category: string) => {
 const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdit, compact = false }) => {
   if (transactions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-100 transition-colors">
-        <div className="p-4 bg-white rounded-full shadow-sm mb-4">
+      <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-600 bg-slate-50/50 dark:bg-slate-800/20 rounded-3xl border-2 border-dashed border-slate-100 dark:border-slate-800 transition-colors">
+        <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm mb-4">
           <ShoppingBag className="w-10 h-10 opacity-30 text-indigo-500" />
         </div>
         <p className="font-bold">Belum ada transaksi terdaftar</p>
@@ -80,60 +80,60 @@ const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdit, comp
         <table className="min-w-full">
           {!compact && (
             <thead>
-              <tr className="border-b-2 border-slate-50">
-                <th scope="col" className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest">
+              <tr className="border-b-2 border-slate-50 dark:border-slate-800">
+                <th scope="col" className="px-6 py-4 text-left text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
                   Detail & Deskripsi
                 </th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">
+                <th scope="col" className="px-6 py-4 text-left text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest hidden md:table-cell">
                   Kategori
                 </th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest hidden lg:table-cell">
+                <th scope="col" className="px-6 py-4 text-left text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest hidden lg:table-cell">
                   Tanggal
                 </th>
-                <th scope="col" className="px-6 py-4 text-right text-xs font-black text-slate-400 uppercase tracking-widest">
+                <th scope="col" className="px-6 py-4 text-right text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
                   Jumlah
                 </th>
-                <th scope="col" className="px-6 py-4 text-right text-xs font-black text-slate-400 uppercase tracking-widest">
+                <th scope="col" className="px-6 py-4 text-right text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
                   Aksi
                 </th>
               </tr>
             </thead>
           )}
-          <tbody className="divide-y divide-slate-50">
+          <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
             {transactions.map((t) => (
-              <tr key={t.id} className="group hover:bg-slate-50/80 transition-all duration-200">
+              <tr key={t.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-all duration-200">
                 <td className="px-6 py-5 whitespace-nowrap">
                   <div className="flex items-center gap-4">
                     <div className={`flex-shrink-0 p-3 rounded-2xl shadow-sm ${
                       t.type === TransactionType.INCOME 
-                        ? 'bg-emerald-100 text-emerald-600' 
-                        : 'bg-rose-100 text-rose-600'
+                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' 
+                        : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
                     }`}>
                       {getCategoryIcon(t.category)}
                     </div>
                     <div>
-                      <p className="text-base font-black text-slate-900 leading-none mb-1.5">{t.description}</p>
+                      <p className="text-base font-black text-slate-900 dark:text-slate-100 leading-none mb-1.5">{t.description}</p>
                       <div className="flex items-center gap-2 md:hidden">
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${
-                          t.type === TransactionType.INCOME ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+                          t.type === TransactionType.INCOME ? 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600' : 'bg-rose-50 dark:bg-rose-900/40 text-rose-600'
                         }`}>
                           {t.category}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-bold">{t.date}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">{t.date}</span>
                       </div>
                     </div>
                   </div>
                 </td>
                 {!compact && (
                   <td className="px-6 py-5 hidden md:table-cell">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-slate-100 text-slate-600 uppercase tracking-wider">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                       {t.category}
                     </span>
                   </td>
                 )}
                 {!compact && (
                   <td className="px-6 py-5 hidden lg:table-cell whitespace-nowrap">
-                    <p className="text-sm font-bold text-slate-500">{t.date}</p>
+                    <p className="text-sm font-bold text-slate-500 dark:text-slate-400">{t.date}</p>
                   </td>
                 )}
                 <td className="px-6 py-5 text-right whitespace-nowrap">
@@ -147,14 +147,14 @@ const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdit, comp
                   <div className="flex justify-end gap-1">
                     <button 
                       onClick={() => onEdit(t)}
-                      className="p-3 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-2xl transition-all active:scale-90"
+                      className="p-3 text-slate-300 dark:text-slate-600 hover:text-indigo-500 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-2xl transition-all active:scale-90"
                       title="Edit Transaksi"
                     >
                       <Edit3 className="w-5 h-5" />
                     </button>
                     <button 
                       onClick={() => onDelete(t.id)}
-                      className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all active:scale-90"
+                      className="p-3 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all active:scale-90"
                       title="Hapus Transaksi"
                     >
                       <Trash2 className="w-5 h-5" />

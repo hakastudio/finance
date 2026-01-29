@@ -5,11 +5,12 @@ import { Transaction, TransactionType } from '../types';
 
 interface Props {
   transactions: Transaction[];
+  isDarkMode?: boolean;
 }
 
 const COLORS = ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
-const FinancialCharts: React.FC<Props> = ({ transactions }) => {
+const FinancialCharts: React.FC<Props> = ({ transactions, isDarkMode = false }) => {
   const categoryData = useMemo(() => {
     const expenses = transactions.filter(t => t.type === TransactionType.EXPENSE);
     const groups = expenses.reduce((acc: any, curr) => {
@@ -40,12 +41,13 @@ const FinancialCharts: React.FC<Props> = ({ transactions }) => {
     return Object.values(groups).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(-7);
   }, [transactions]);
 
-  const textColor = '#64748b';
-  const gridColor = '#f1f5f9';
+  const textColor = isDarkMode ? '#94a3b8' : '#64748b';
+  const gridColor = isDarkMode ? '#1e293b' : '#f1f5f9';
+  const tooltipBg = isDarkMode ? '#0f172a' : '#ffffff';
 
   if (transactions.length === 0) {
     return (
-      <div className="h-64 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-100 rounded-xl transition-colors">
+      <div className="h-64 flex items-center justify-center text-slate-400 dark:text-slate-600 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl transition-colors">
         Data tidak cukup untuk menampilkan grafik
       </div>
     );
@@ -54,23 +56,23 @@ const FinancialCharts: React.FC<Props> = ({ transactions }) => {
   return (
     <div className="space-y-8">
       <div className="h-[300px] w-full">
-        <h4 className="text-sm font-medium text-slate-500 mb-4 text-center">Trend Pemasukan vs Pengeluaran (7 Hari Terakhir)</h4>
+        <h4 className="text-sm font-black text-slate-500 dark:text-slate-400 mb-4 text-center uppercase tracking-widest">Trend 7 Hari Terakhir</h4>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={monthlyData}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
-            <XAxis dataKey="date" stroke={textColor} fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke={textColor} fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `Rp${val/1000}k`} />
+            <XAxis dataKey="date" stroke={textColor} fontSize={10} tickLine={false} axisLine={false} />
+            <YAxis stroke={textColor} fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => `Rp${val/1000}k`} />
             <Tooltip 
               contentStyle={{ 
-                backgroundColor: '#fff', 
+                backgroundColor: tooltipBg, 
                 borderRadius: '12px', 
                 border: 'none', 
                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
               }} 
-              itemStyle={{ color: '#1e293b' }}
+              itemStyle={{ color: isDarkMode ? '#f8fafc' : '#1e293b' }}
               formatter={(val: number) => `Rp ${val.toLocaleString('id-ID')}`}
             />
-            <Legend verticalAlign="top" height={36} wrapperStyle={{ color: textColor }} />
+            <Legend verticalAlign="top" height={36} wrapperStyle={{ color: textColor, fontSize: '10px', fontWeight: 800, textTransform: 'uppercase' }} />
             <Bar dataKey="income" name="Pemasukan" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
             <Bar dataKey="expense" name="Pengeluaran" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={20} />
           </BarChart>
@@ -78,7 +80,7 @@ const FinancialCharts: React.FC<Props> = ({ transactions }) => {
       </div>
 
       <div className="h-[300px] w-full">
-        <h4 className="text-sm font-medium text-slate-500 mb-4 text-center">Distribusi Pengeluaran per Kategori</h4>
+        <h4 className="text-sm font-black text-slate-500 dark:text-slate-400 mb-4 text-center uppercase tracking-widest">Distribusi Pengeluaran</h4>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -91,26 +93,26 @@ const FinancialCharts: React.FC<Props> = ({ transactions }) => {
               dataKey="value"
             >
               {categoryData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
               ))}
             </Pie>
             <Tooltip 
               contentStyle={{ 
-                backgroundColor: '#fff', 
+                backgroundColor: tooltipBg, 
                 borderRadius: '12px', 
                 border: 'none', 
                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
               }} 
-              itemStyle={{ color: '#1e293b' }}
+              itemStyle={{ color: isDarkMode ? '#f8fafc' : '#1e293b' }}
               formatter={(val: number) => `Rp ${val.toLocaleString('id-ID')}`}
             />
           </PieChart>
         </ResponsiveContainer>
-        <div className="flex flex-wrap justify-center gap-4 mt-2">
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-2">
            {categoryData.map((entry, index) => (
-             <div key={entry.name} className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                <span className="text-xs text-slate-500">{entry.name}</span>
+             <div key={entry.name} className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter">{entry.name}</span>
              </div>
            ))}
         </div>

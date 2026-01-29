@@ -6,12 +6,14 @@ import {
   ShieldCheck, Database, Trash2, 
   Download, Activity, BarChart, 
   Settings2, Info, Save, CheckCircle2,
-  Layout, Globe
+  Layout, Globe, RefreshCw
 } from 'lucide-react';
 
 interface Props {
   transactions: Transaction[];
   categories: Category[];
+  appName: string;
+  onUpdateAppName: (name: string) => void;
   onAddCategory: (name: string, type: TransactionType) => void;
   onUpdateCategory: (id: string, name: string) => void;
   onDeleteCategory: (id: string) => void;
@@ -22,21 +24,22 @@ interface Props {
 const AdminDashboard: React.FC<Props> = ({ 
   transactions, 
   categories, 
+  appName: currentAppName,
+  onUpdateAppName,
   onAddCategory, 
   onUpdateCategory, 
   onDeleteCategory,
   onResetData,
   onExport
 }) => {
-  const [appName, setAppName] = useState('JEJAK LANGKAH');
-  const [currency, setCurrency] = useState('IDR');
+  const [tempAppName, setTempAppName] = useState(currentAppName);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Sync temp value if currentAppName changes from outside
   useEffect(() => {
-    const savedName = localStorage.getItem('jejaklangkah_app_name');
-    if (savedName) setAppName(savedName);
-  }, []);
+    setTempAppName(currentAppName);
+  }, [currentAppName]);
 
   const stats = useMemo(() => {
     const totalTransactions = transactions.length;
@@ -50,98 +53,124 @@ const AdminDashboard: React.FC<Props> = ({
   }, [transactions, categories]);
 
   const handleSaveSettings = () => {
+    if (!tempAppName.trim()) return;
+    
     setIsSaving(true);
-    // Responsif: Simpan langsung ke local storage
+    // Simulasi delay untuk feedback visual "Processing"
     setTimeout(() => {
-      localStorage.setItem('jejaklangkah_app_name', appName);
+      onUpdateAppName(tempAppName.toUpperCase());
       setIsSaving(false);
       setShowSuccess(true);
-      window.location.reload(); // Reload untuk menerapkan branding global
       setTimeout(() => setShowSuccess(false), 3000);
-    }, 1200); // Delay singkat untuk kepuasan visual
+    }, 800);
   };
 
   return (
     <div className="space-y-8 animate-fadeIn pb-20">
-      <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
+      <div className="bg-slate-900 dark:bg-slate-900/40 p-8 rounded-[2.5rem] text-white shadow-xl dark:shadow-none border border-transparent dark:border-slate-800 relative overflow-hidden transition-colors">
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
             <ShieldCheck className="w-5 h-5 text-indigo-400" />
-            <span className="font-bold uppercase tracking-widest text-[10px] text-slate-400">System Administrator</span>
+            <span className="font-bold uppercase tracking-widest text-[10px] text-slate-400">Pusat Kendali Sistem</span>
           </div>
-          <h2 className="text-2xl font-black mb-1">Panel Kendali</h2>
-          <p className="text-slate-400 text-xs max-w-sm">Kelola master data dan konfigurasi inti sistem.</p>
+          <h2 className="text-2xl font-black mb-1">Administrator Dashboard</h2>
+          <p className="text-slate-400 text-xs max-w-sm">Kelola identitas aplikasi dan struktur kategori keuangan.</p>
         </div>
         <Layout className="absolute -right-10 -bottom-10 w-48 h-48 opacity-5 text-white" />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Data Kas', value: stats.totalTransactions, icon: Database, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-          { label: 'Kategori', value: stats.totalCategories, icon: Settings2, color: 'text-purple-600', bg: 'bg-purple-50' },
-          { label: 'Aktivitas', value: 'Live', icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'Rerata Rp', value: Math.round(stats.avgTransaction).toLocaleString('id-ID'), icon: BarChart, color: 'text-orange-600', bg: 'bg-orange-50' },
+          { label: 'Data Transaksi', value: stats.totalTransactions, icon: Database, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+          { label: 'Total Kategori', value: stats.totalCategories, icon: Settings2, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+          { label: 'Status Server', value: 'Synced', icon: RefreshCw, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+          { label: 'Rerata Kas', value: `Rp ${Math.round(stats.avgTransaction).toLocaleString('id-ID')}`, icon: BarChart, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/20' },
         ].map((s, i) => (
-          <div key={i} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+          <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm transition-colors">
             <div className={`w-8 h-8 ${s.bg} ${s.color} rounded-xl flex items-center justify-center mb-3`}><s.icon className="w-4 h-4" /></div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-0.5">{s.label}</p>
-            <p className="text-base font-black text-slate-800">{s.value}</p>
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter mb-0.5">{s.label}</p>
+            <p className="text-base font-black text-slate-800 dark:text-slate-200">{s.value}</p>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
-          <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-            <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
-              <Globe className="w-5 h-5 text-indigo-500" /> Pengaturan Global
-            </h3>
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
+            <div className="flex justify-between items-start mb-6">
+              <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-indigo-500" /> Branding Aplikasi
+              </h3>
+              {showSuccess && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-black uppercase animate-fadeIn">
+                  <CheckCircle2 className="w-3 h-3" /> Tersinkronisasi
+                </div>
+              )}
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nama Aplikasi</label>
+                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Nama Tampilan App</label>
                 <input 
                   type="text" 
-                  value={appName}
-                  onChange={(e) => setAppName(e.target.value.toUpperCase())}
-                  className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold focus:border-indigo-500 transition-all"
+                  value={tempAppName}
+                  onChange={(e) => setTempAppName(e.target.value)}
+                  placeholder="CONTOH: KAS PRIBADI"
+                  className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 dark:text-white border-2 border-slate-100 dark:border-slate-700 rounded-2xl outline-none font-bold focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mata Uang</label>
-                <select className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold">
-                  <option value="IDR">IDR (Rupiah)</option>
-                  <option value="USD">USD (Dollar)</option>
-                </select>
+              <div className="space-y-1.5 opacity-50 cursor-not-allowed">
+                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Zona Waktu Sistem</label>
+                <div className="w-full px-5 py-4 bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-slate-400 dark:text-slate-500">
+                  Asia/Jakarta (GMT+7)
+                </div>
               </div>
             </div>
+            
             <button 
               onClick={handleSaveSettings}
-              disabled={isSaving}
-              className={`w-full md:w-auto px-10 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 transition-all ${isSaving ? 'bg-slate-100 text-slate-400' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100'}`}
+              disabled={isSaving || tempAppName === currentAppName}
+              className={`w-full md:w-auto px-10 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 transition-all ${
+                isSaving 
+                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' 
+                  : tempAppName === currentAppName
+                    ? 'bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 border border-slate-100 dark:border-slate-700 cursor-not-allowed'
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100 dark:shadow-none active:scale-95'
+              }`}
             >
               {isSaving ? <Activity className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-              {isSaving ? 'Menerapkan...' : 'Simpan Perubahan'}
+              {isSaving ? 'Menyimpan...' : 'Sinkronkan Sekarang'}
             </button>
-            {showSuccess && <p className="mt-4 text-emerald-600 text-xs font-bold flex items-center gap-1 animate-fadeIn"><CheckCircle2 className="w-4 h-4" /> Pengaturan berhasil diperbarui!</p>}
           </div>
 
-          <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
             <CategoryManager categories={categories} onAdd={onAddCategory} onUpdate={onUpdateCategory} onDelete={onDeleteCategory} />
           </div>
         </div>
 
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-rose-50 p-8 rounded-[2.5rem] border border-rose-100">
-            <h3 className="text-rose-800 font-black mb-4 flex items-center gap-2"><Info className="w-5 h-5" /> Zona Bahaya</h3>
-            <button onClick={onResetData} className="w-full py-4 bg-white border border-rose-200 text-rose-600 rounded-2xl font-black text-sm hover:bg-rose-100 transition-all flex items-center justify-center gap-2">
+          <div className="bg-rose-50 dark:bg-rose-900/10 p-8 rounded-[2.5rem] border border-rose-100 dark:border-rose-900/30">
+            <div className="flex items-center gap-2 mb-4 text-rose-800 dark:text-rose-400">
+              <Info className="w-5 h-5" />
+              <h3 className="font-black uppercase tracking-tight">Zona Pembersihan</h3>
+            </div>
+            <p className="text-xs text-rose-600 dark:text-rose-500 mb-6 font-medium">Tindakan ini akan menghapus seluruh histori transaksi secara permanen dari perangkat ini.</p>
+            <button onClick={onResetData} className="w-full py-4 bg-white dark:bg-slate-900 border-2 border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 rounded-2xl font-black text-sm hover:bg-rose-600 dark:hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95">
               <Trash2 className="w-4 h-4" /> Reset Database
             </button>
           </div>
-          <div className="bg-slate-100 p-8 rounded-[2.5rem] border border-slate-200">
-             <h4 className="text-xs font-black text-slate-500 mb-4 uppercase tracking-widest">Maintenance</h4>
-             <button onClick={onExport} className="w-full py-4 bg-white border border-slate-200 text-slate-700 rounded-2xl font-black text-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
-               <Download className="w-4 h-4" /> Backup Sekarang
-             </button>
+          
+          <div className="bg-indigo-50 dark:bg-indigo-900/10 p-8 rounded-[2.5rem] border border-indigo-100 dark:border-indigo-900/30 relative overflow-hidden group">
+             <div className="relative z-10">
+               <h4 className="text-xs font-black text-indigo-800 dark:text-indigo-400 mb-4 uppercase tracking-widest">Master Backup</h4>
+               <p className="text-[11px] text-indigo-600 dark:text-indigo-500 mb-6 font-medium">Unduh salinan data keuangan Anda dalam format .CSV untuk arsip pribadi atau Excel.</p>
+               <button onClick={onExport} className="w-full py-4 bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 rounded-2xl font-black text-sm hover:bg-indigo-600 dark:hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm dark:shadow-none">
+                 <Download className="w-4 h-4" /> Ekspor Data (.CSV)
+               </button>
+             </div>
+             <div className="absolute -right-6 -bottom-6 opacity-5 group-hover:scale-110 transition-transform">
+               <Database className="w-32 h-32 text-indigo-900 dark:text-indigo-400" />
+             </div>
           </div>
         </div>
       </div>
