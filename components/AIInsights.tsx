@@ -37,7 +37,7 @@ const AIInsights: React.FC<Props> = ({ transactions, summary }) => {
       <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl text-indigo-600 dark:text-indigo-400">
+            <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-2xl text-red-600 dark:text-red-400">
               <BrainCircuit className="w-8 h-8" />
             </div>
             <div>
@@ -53,7 +53,7 @@ const AIInsights: React.FC<Props> = ({ transactions, summary }) => {
             className={`flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all shadow-lg dark:shadow-none ${
               loading 
                 ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed' 
-                : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'
+                : 'bg-red-600 text-white hover:bg-red-700 active:scale-95'
             }`}
           >
             {loading ? (
@@ -81,13 +81,13 @@ const AIInsights: React.FC<Props> = ({ transactions, summary }) => {
       {insight && !loading && (
         <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors animate-fadeIn">
           <div className="flex items-center gap-2 mb-6 border-b dark:border-slate-800 pb-4">
-            <Sparkles className="w-6 h-6 text-indigo-500" />
+            <Sparkles className="w-6 h-6 text-red-500" />
             <h4 className="text-lg font-bold text-slate-800 dark:text-white">Hasil Analisis Gemini AI</h4>
           </div>
           <div className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
             {insight.split('\n').map((line, i) => {
               if (line.startsWith('### ')) {
-                return <h3 key={i} className="text-xl font-bold mt-6 mb-2 text-indigo-600 dark:text-indigo-400">{line.replace('### ', '')}</h3>;
+                return <h3 key={i} className="text-xl font-bold mt-6 mb-2 text-red-600 dark:text-red-400">{line.replace('### ', '')}</h3>;
               } else if (line.startsWith('## ')) {
                 return <h2 key={i} className="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-white border-b dark:border-slate-800 pb-2">{line.replace('## ', '')}</h2>;
               } else if (line.startsWith('- ') || line.startsWith('* ')) {
@@ -110,7 +110,7 @@ const AIInsights: React.FC<Props> = ({ transactions, summary }) => {
       {!insight && !loading && !error && (
         <div className="bg-slate-50 dark:bg-slate-800/20 border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 rounded-3xl text-center">
            <div className="inline-block p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm mb-4">
-              <Sparkles className="w-8 h-8 text-indigo-400" />
+              <Sparkles className="w-8 h-8 text-red-400" />
            </div>
            <h4 className="text-lg font-semibold text-slate-700 dark:text-slate-300">Siap untuk Analisis?</h4>
            <p className="text-slate-500 dark:text-slate-500 mt-2 max-w-sm mx-auto">Klik tombol di atas untuk melihat bagaimana AI melihat kesehatan keuangan Anda hari ini.</p>

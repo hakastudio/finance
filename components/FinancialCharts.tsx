@@ -8,7 +8,7 @@ interface Props {
   isDarkMode?: boolean;
 }
 
-const COLORS = ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+const COLORS = ['#dc2626', '#10b981', '#f43f5e', '#f59e0b', '#e11d48', '#fb7185', '#be123c'];
 
 const FinancialCharts: React.FC<Props> = ({ transactions, isDarkMode = false }) => {
   const categoryData = useMemo(() => {
@@ -74,7 +74,7 @@ const FinancialCharts: React.FC<Props> = ({ transactions, isDarkMode = false }) 
             />
             <Legend verticalAlign="top" height={36} wrapperStyle={{ color: textColor, fontSize: '10px', fontWeight: 800, textTransform: 'uppercase' }} />
             <Bar dataKey="income" name="Pemasukan" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
-            <Bar dataKey="expense" name="Pengeluaran" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={20} />
+            <Bar dataKey="expense" name="Pengeluaran" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={20} />
           </BarChart>
         </ResponsiveContainer>
       </div>

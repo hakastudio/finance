@@ -12,10 +12,10 @@ const SummaryCards: React.FC<Props> = ({ summary }) => {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       {/* Balance Card */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
-        <div className="absolute -top-6 -right-6 w-32 h-32 bg-indigo-50 dark:bg-indigo-900/20 rounded-full group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors duration-500"></div>
+        <div className="absolute -top-6 -right-6 w-32 h-32 bg-red-50 dark:bg-red-900/20 rounded-full group-hover:bg-red-100 dark:group-hover:bg-red-900/40 transition-colors duration-500"></div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none">
+            <div className="p-3 bg-red-600 text-white rounded-2xl shadow-lg shadow-red-200 dark:shadow-none">
               <Wallet className="w-6 h-6" />
             </div>
             <span className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total Saldo</span>
@@ -23,7 +23,7 @@ const SummaryCards: React.FC<Props> = ({ summary }) => {
           <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-2">Rp {summary.balance.toLocaleString('id-ID')}</h3>
           <p className="text-xs font-bold text-emerald-600 flex items-center gap-1">
             <ArrowUpRight className="w-3 h-3" />
-            +2.4% vs Bulan Lalu
+            Terpantau Stabil
           </p>
         </div>
       </div>
@@ -56,7 +56,7 @@ const SummaryCards: React.FC<Props> = ({ summary }) => {
           <h3 className="text-3xl font-black text-rose-600 dark:text-rose-400 mb-2">Rp {summary.totalExpense.toLocaleString('id-ID')}</h3>
           <p className="text-xs font-bold text-rose-400 flex items-center gap-1">
             <ArrowDownRight className="w-3 h-3" />
-            -4.1% Hemat Energi
+            Terpantau Aktif
           </p>
         </div>
       </div>

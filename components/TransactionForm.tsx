@@ -51,7 +51,7 @@ const TransactionForm: React.FC<Props> = ({ onSubmit, onCancel, categories, init
   };
 
   const labelClasses = "text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block px-1";
-  const inputClasses = "w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600";
+  const inputClasses = "w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold focus:border-red-500 focus:bg-white dark:focus:bg-slate-800 outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -104,7 +104,7 @@ const TransactionForm: React.FC<Props> = ({ onSubmit, onCancel, categories, init
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Contoh: Makan Siang di Kantor"
+          placeholder="Contoh: Pembayaran Guide"
           className={inputClasses}
           required
         />
@@ -127,7 +127,7 @@ const TransactionForm: React.FC<Props> = ({ onSubmit, onCancel, categories, init
         )}
         <button
           type="submit"
-          className={`flex-[2] py-4 rounded-2xl font-black text-white shadow-lg dark:shadow-none transition-all active:scale-95 ${type === TransactionType.INCOME ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-100'}`}
+          className={`flex-[2] py-4 rounded-2xl font-black text-white shadow-lg dark:shadow-none transition-all active:scale-95 ${type === TransactionType.INCOME ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100' : 'bg-red-600 hover:bg-red-700 shadow-red-100'}`}
         >
           <div className="flex items-center justify-center gap-2">
             <Save className="w-5 h-5" />
