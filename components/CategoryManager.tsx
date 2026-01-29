@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Category, TransactionType } from '../types';
+import React, { useState, useMemo } from 'react';
+import { Category, TransactionType, Transaction } from '../types';
 import { 
   Plus, Trash2, Edit2, Check, X, Tag, 
   ArrowUpCircle, ArrowDownCircle, 
@@ -9,11 +9,13 @@ import {
   PlusCircle, LayoutGrid, Utensils, 
   Zap, Music, Gamepad, Smartphone, 
   TrendingUp, Dumbbell, Plane, Coins, 
-  Shield, ShoppingCart, Home
+  Shield, ShoppingCart, Home, ListChecks,
+  Save, AlertCircle, Edit3
 } from 'lucide-react';
 
 interface Props {
   categories: Category[];
+  transactions: Transaction[];
   onAdd: (name: string, type: TransactionType) => void;
   onUpdate: (id: string, name: string) => void;
   onDelete: (id: string) => void;
@@ -21,55 +23,43 @@ interface Props {
 
 const getCategoryIcon = (name: string) => {
   const cat = name.toLowerCase();
-  
-  // Food & Beverage
   if (cat.includes('makan') || cat.includes('restoran') || cat.includes('warung') || cat.includes('jajan')) return <Utensils className="w-5 h-5" />;
   if (cat.includes('kopi') || cat.includes('cafe') || cat.includes('minum') || cat.includes('teh')) return <Coffee className="w-5 h-5" />;
-  
-  // Transport
-  if (cat.includes('transpor') || cat.includes('bensin') || cat.includes('mobil') || cat.includes('motor') || cat.includes('parkir') || cat.includes('ojek') || cat.includes('grab') || cat.includes('gojek')) return <Car className="w-5 h-5" />;
-  
-  // Shopping
-  if (cat.includes('belanja') || cat.includes('mall') || cat.includes('pasar') || cat.includes('pakaian') || cat.includes('baju')) return <ShoppingBag className="w-5 h-5" />;
-  if (cat.includes('groceries') || cat.includes('supermarket') || cat.includes('toko')) return <ShoppingCart className="w-5 h-5" />;
-  
-  // Bills & Utilities
-  if (cat.includes('tagihan') || cat.includes('listrik') || cat.includes('air') || cat.includes('internet') || cat.includes('wifi') || cat.includes('pulsa')) return <Zap className="w-5 h-5" />;
-  if (cat.includes('cicilan') || cat.includes('hutang') || cat.includes('kartu kredit')) return <CreditCard className="w-5 h-5" />;
-  
-  // Living
-  if (cat.includes('rumah') || cat.includes('kost') || cat.includes('sewa') || cat.includes('apartemen') || cat.includes('perabot')) return <Home className="w-5 h-5" />;
-  
-  // Entertainment & Lifestyle
-  if (cat.includes('hiburan') || cat.includes('bioskop') || cat.includes('nonton') || cat.includes('streaming') || cat.includes('film')) return <Music className="w-5 h-5" />;
-  if (cat.includes('game') || cat.includes('main') || cat.includes('hobi')) return <Gamepad className="w-5 h-5" />;
-  if (cat.includes('gym') || cat.includes('olahraga') || cat.includes('sehat')) return <Dumbbell className="w-5 h-5" />;
-  if (cat.includes('gadget') || cat.includes('hp') || cat.includes('laptop') || cat.includes('elektronik')) return <Smartphone className="w-5 h-5" />;
-  
-  // Health & Education
-  if (cat.includes('sakit') || cat.includes('obat') || cat.includes('rs') || cat.includes('dokter') || cat.includes('medis')) return <Heart className="w-5 h-5" />;
-  if (cat.includes('didik') || cat.includes('sekolah') || cat.includes('kuliah') || cat.includes('buku') || cat.includes('kursus')) return <GraduationCap className="w-5 h-5" />;
-  
-  // Income & Finance
-  if (cat.includes('gaji') || cat.includes('kerja') || cat.includes('upah') || cat.includes('salary')) return <Briefcase className="w-5 h-5" />;
-  if (cat.includes('invest') || cat.includes('saham') || cat.includes('crypto') || cat.includes('reksadana')) return <TrendingUp className="w-5 h-5" />;
-  if (cat.includes('bonus') || cat.includes('thr') || cat.includes('insentif')) return <Coins className="w-5 h-5" />;
-  if (cat.includes('hadiah') || cat.includes('kado') || cat.includes('donasi')) return <Gift className="w-5 h-5" />;
-  
-  // Travel & Security
-  if (cat.includes('travel') || cat.includes('liburan') || cat.includes('pesawat') || cat.includes('hotel') || cat.includes('tiket')) return <Plane className="w-5 h-5" />;
-  if (cat.includes('asuransi') || cat.includes('proteksi')) return <Shield className="w-5 h-5" />;
-  
+  if (cat.includes('transpor') || cat.includes('bensin') || cat.includes('mobil') || cat.includes('motor')) return <Car className="w-5 h-5" />;
+  if (cat.includes('belanja') || cat.includes('mall') || cat.includes('pasar')) return <ShoppingBag className="w-5 h-5" />;
+  if (cat.includes('groceries') || cat.includes('supermarket')) return <ShoppingCart className="w-5 h-5" />;
+  if (cat.includes('tagihan') || cat.includes('listrik') || cat.includes('internet')) return <Zap className="w-5 h-5" />;
+  if (cat.includes('cicilan') || cat.includes('kredit')) return <CreditCard className="w-5 h-5" />;
+  if (cat.includes('rumah') || cat.includes('kost')) return <Home className="w-5 h-5" />;
+  if (cat.includes('hiburan') || cat.includes('bioskop') || cat.includes('streaming')) return <Music className="w-5 h-5" />;
+  if (cat.includes('game') || cat.includes('hobi')) return <Gamepad className="w-5 h-5" />;
+  if (cat.includes('sehat') || cat.includes('olahraga')) return <Dumbbell className="w-5 h-5" />;
+  if (cat.includes('hp') || cat.includes('laptop') || cat.includes('elektronik')) return <Smartphone className="w-5 h-5" />;
+  if (cat.includes('sakit') || cat.includes('obat') || cat.includes('medis')) return <Heart className="w-5 h-5" />;
+  if (cat.includes('didik') || cat.includes('sekolah') || cat.includes('buku')) return <GraduationCap className="w-5 h-5" />;
+  if (cat.includes('gaji') || cat.includes('kerja') || cat.includes('upah')) return <Briefcase className="w-5 h-5" />;
+  if (cat.includes('invest') || cat.includes('saham') || cat.includes('crypto')) return <TrendingUp className="w-5 h-5" />;
+  if (cat.includes('bonus') || cat.includes('thr')) return <Coins className="w-5 h-5" />;
+  if (cat.includes('hadiah') || cat.includes('donasi')) return <Gift className="w-5 h-5" />;
+  if (cat.includes('travel') || cat.includes('liburan') || cat.includes('hotel')) return <Plane className="w-5 h-5" />;
+  if (cat.includes('asuransi')) return <Shield className="w-5 h-5" />;
   return <Tag className="w-5 h-5" />;
 };
 
-const CategoryManager: React.FC<Props> = ({ categories, onAdd, onUpdate, onDelete }) => {
+const CategoryManager: React.FC<Props> = ({ categories, transactions, onAdd, onUpdate, onDelete }) => {
   const [newCatName, setNewCatName] = useState('');
   const [activeType, setActiveType] = useState<TransactionType>(TransactionType.EXPENSE);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
 
   const filteredCategories = categories.filter(c => c.type === activeType);
+
+  const usageStats = useMemo(() => {
+    return transactions.reduce((acc: Record<string, number>, t) => {
+      acc[t.category] = (acc[t.category] || 0) + 1;
+      return acc;
+    }, {});
+  }, [transactions]);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,156 +74,186 @@ const CategoryManager: React.FC<Props> = ({ categories, onAdd, onUpdate, onDelet
     setEditingName(cat.name);
   };
 
+  const saveEditing = () => {
+    if (editingId && editingName.trim()) {
+      onUpdate(editingId, editingName.trim());
+      setEditingId(null);
+    }
+  };
+
   const cancelEditing = () => {
     setEditingId(null);
     setEditingName('');
   };
 
-  const saveEditing = () => {
-    if (editingId && editingName.trim()) {
-      onUpdate(editingId, editingName.trim());
-      setEditingId(null);
-      setEditingName('');
-    }
-  };
-
   return (
-    <div className="space-y-8">
-      {/* Type Switcher */}
-      <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl max-w-md transition-colors">
-        <button
-          onClick={() => setActiveType(TransactionType.EXPENSE)}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-200 ${activeType === TransactionType.EXPENSE ? 'bg-white dark:bg-slate-700 shadow-md text-red-600 dark:text-red-400 font-black' : 'text-slate-500 font-bold hover:text-slate-700 dark:hover:text-slate-300'}`}
-        >
-          <ArrowDownCircle className="w-5 h-5" />
-          Pengeluaran
-        </button>
-        <button
-          onClick={() => setActiveType(TransactionType.INCOME)}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-200 ${activeType === TransactionType.INCOME ? 'bg-white dark:bg-slate-700 shadow-md text-emerald-600 dark:text-emerald-400 font-black' : 'text-slate-500 font-bold hover:text-slate-700 dark:hover:text-slate-300'}`}
-        >
-          <ArrowUpCircle className="w-5 h-5" />
-          Pemasukan
-        </button>
-      </div>
-
-      {/* Add Category Section */}
-      <form onSubmit={handleAdd} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <PlusCircle className="h-6 w-6 text-indigo-500" />
-            </div>
-            <input
-              type="text"
-              value={newCatName}
-              onChange={(e) => setNewCatName(e.target.value)}
-              placeholder="Ketik nama kategori baru di sini..."
-              className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50/50 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
-            />
-          </div>
+    <div className="space-y-8 animate-fadeIn">
+      {/* Header Menu Kategori */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-slate-50 dark:bg-slate-800/40 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800/50">
+        <div className="space-y-2">
+          <h3 className="text-2xl font-black text-slate-800 dark:text-white flex items-center gap-3">
+            <ListChecks className="w-7 h-7 text-indigo-500" /> 
+            Menu Kelola Kategori
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+            Atur label kategori untuk transaksi {activeType === TransactionType.EXPENSE ? 'Pengeluaran' : 'Pemasukan'}.
+          </p>
+        </div>
+        
+        <div className="flex p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
           <button
-            type="submit"
-            className="bg-indigo-600 text-white px-8 py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg dark:shadow-none shadow-indigo-100 font-black flex items-center justify-center gap-2 active:scale-95"
+            onClick={() => { setActiveType(TransactionType.EXPENSE); cancelEditing(); }}
+            className={`px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.1em] transition-all duration-300 flex items-center gap-2 ${activeType === TransactionType.EXPENSE ? 'bg-rose-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
           >
-            <Plus className="w-6 h-6" />
-            Tambah
+            <ArrowDownCircle className="w-4 h-4" /> Pengeluaran
+          </button>
+          <button
+            onClick={() => { setActiveType(TransactionType.INCOME); cancelEditing(); }}
+            className={`px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.1em] transition-all duration-300 flex items-center gap-2 ${activeType === TransactionType.INCOME ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+          >
+            <ArrowUpCircle className="w-4 h-4" /> Pemasukan
           </button>
         </div>
-      </form>
+      </div>
 
-      {/* Category Grid */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between px-2">
-          <h4 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <LayoutGrid className="w-4 h-4" />
-            Daftar Kategori
-          </h4>
-          <span className="text-xs text-slate-400 dark:text-slate-600 font-extrabold">{filteredCategories.length} KATEGORI</span>
-        </div>
+      {/* Input Kategori Baru */}
+      <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2 px-1">
+          <PlusCircle className="w-3.5 h-3.5" /> Tambah Kategori {activeType === TransactionType.EXPENSE ? 'Pengeluaran' : 'Pemasukan'}
+        </h4>
+        <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            value={newCatName}
+            onChange={(e) => setNewCatName(e.target.value)}
+            placeholder={`Contoh: ${activeType === TransactionType.EXPENSE ? 'Biaya Langganan' : 'Keuntungan Dagang'}`}
+            className="flex-1 px-6 py-4 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl outline-none font-bold text-slate-900 dark:text-white focus:border-indigo-500 transition-all"
+          />
+          <button
+            type="submit"
+            disabled={!newCatName.trim()}
+            className={`px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 ${!newCatName.trim() ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100 dark:shadow-none'}`}
+          >
+            <Plus className="w-4 h-4" /> Simpan Kategori
+          </button>
+        </form>
+      </div>
 
-        {filteredCategories.length === 0 ? (
-          <div className="bg-slate-50 dark:bg-slate-800/30 border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 rounded-3xl text-center">
-            <Tag className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-600 font-bold">Belum ada kategori untuk tipe ini.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredCategories.map((cat) => (
-              <div 
-                key={cat.id} 
-                className={`bg-white dark:bg-slate-900 p-6 rounded-3xl border-2 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 group relative ${editingId === cat.id ? 'ring-4 ring-indigo-100 dark:ring-indigo-900/30 border-indigo-500' : ''}`}
-              >
-                {editingId === cat.id ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl">
-                        <Edit2 className="w-4 h-4" />
-                      </div>
-                      <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Ubah Nama</span>
-                    </div>
-                    <input
-                      type="text"
-                      value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
-                      className="w-full px-4 py-4 bg-white dark:bg-slate-800 border-2 border-indigo-500 rounded-xl focus:ring-4 focus:ring-indigo-50 dark:focus:ring-indigo-900/50 outline-none text-slate-900 dark:text-white font-black text-lg"
-                      autoFocus
-                    />
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={saveEditing} 
-                        className="flex-1 bg-green-600 text-white py-3 rounded-xl flex items-center justify-center gap-2 font-black hover:bg-green-700 transition-colors shadow-lg dark:shadow-none"
-                      >
-                        <Check className="w-5 h-5" />
-                        Simpan
-                      </button>
-                      <button 
-                        onClick={cancelEditing} 
-                        className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-3 rounded-xl flex items-center justify-center gap-2 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                      >
-                        <X className="w-5 h-5" />
-                        Batal
-                      </button>
-                    </div>
+      {/* Daftar Kategori Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredCategories.map((cat) => (
+          <div 
+            key={cat.id} 
+            className={`p-6 rounded-[2.5rem] border transition-all duration-300 relative overflow-hidden group ${
+              editingId === cat.id 
+                ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800 shadow-lg' 
+                : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-xl'
+            }`}
+          >
+            {editingId === cat.id ? (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 bg-indigo-600 text-white rounded-xl">
+                    <Edit2 className="w-4 h-4" />
                   </div>
-                ) : (
-                  <>
-                    <div className="flex items-start justify-between mb-4">
-                      <div className={`p-4 rounded-2xl shadow-inner ${cat.type === TransactionType.INCOME ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600'}`}>
-                        {getCategoryIcon(cat.name)}
-                      </div>
-                      {!cat.isCustom && (
-                        <span className="text-[10px] bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full uppercase font-black tracking-widest border border-indigo-100 dark:border-indigo-800">
-                          Sistem
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <h5 className="font-black text-slate-900 dark:text-slate-100 text-xl mb-6 truncate">{cat.name}</h5>
-                      <div className="flex items-center gap-3 border-t-2 border-slate-50 dark:border-slate-800 pt-4 mt-2">
-                        <button 
-                          onClick={() => startEditing(cat)}
-                          className="flex-1 flex items-center justify-center gap-2 py-3 px-3 text-slate-700 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all font-black text-xs uppercase tracking-wider"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          Ubah
-                        </button>
-                        {cat.isCustom && (
-                          <button 
-                            onClick={() => onDelete(cat.id)}
-                            className="flex-1 flex items-center justify-center gap-2 py-3 px-3 text-slate-700 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all font-black text-xs uppercase tracking-wider"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Hapus
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )}
+                  <div>
+                    <h5 className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Sedang Mengubah</h5>
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Pastikan nama unik.</p>
+                  </div>
+                </div>
+                
+                <input
+                  type="text"
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  className="w-full px-5 py-4 bg-white dark:bg-slate-800 border-2 border-indigo-500 rounded-2xl font-black text-slate-900 dark:text-white outline-none"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveEditing();
+                    if (e.key === 'Escape') cancelEditing();
+                  }}
+                />
+                
+                <div className="flex gap-2">
+                  <button 
+                    onClick={saveEditing} 
+                    className="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all"
+                  >
+                    <Check className="w-3.5 h-3.5" /> Terapkan
+                  </button>
+                  <button 
+                    onClick={cancelEditing} 
+                    className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                  >
+                    <X className="w-3.5 h-3.5" /> Batal
+                  </button>
+                </div>
               </div>
-            ))}
+            ) : (
+              <div className="flex flex-col h-full">
+                <div className="flex justify-between items-start mb-6">
+                  <div className={`p-4 rounded-2xl shadow-sm ${
+                    cat.type === TransactionType.INCOME 
+                      ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' 
+                      : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600'
+                  }`}>
+                    {getCategoryIcon(cat.name)}
+                  </div>
+                  
+                  <div className="text-right">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Terpakai Pada</span>
+                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-[10px] font-black border border-slate-200 dark:border-slate-700">
+                      {usageStats[cat.name] || 0} Record
+                    </span>
+                  </div>
+                </div>
+                
+                <h4 className="text-xl font-black text-slate-800 dark:text-white mb-8 group-hover:text-indigo-600 transition-colors">
+                  {cat.name}
+                </h4>
+                
+                <div className="mt-auto flex items-center gap-2 pt-6 border-t border-slate-50 dark:border-slate-800">
+                  <button 
+                    onClick={() => startEditing(cat)}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-all font-black text-[9px] uppercase tracking-widest"
+                  >
+                    {/* Fixed: Use Edit2 which is already imported to replace the non-existent Edit3 */}
+                    <Edit2 className="w-3.5 h-3.5" /> Edit Nama
+                  </button>
+                  
+                  {cat.isCustom ? (
+                    <button 
+                      onClick={() => {
+                        const count = usageStats[cat.name] || 0;
+                        if (count > 0) {
+                          if (confirm(`Kategori ini memiliki ${count} transaksi. Jika dihapus, data transaksi mungkin tidak memiliki kategori yang valid. Lanjutkan?`)) {
+                            onDelete(cat.id);
+                          }
+                        } else {
+                          onDelete(cat.id);
+                        }
+                      }}
+                      className="p-3 text-slate-300 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all"
+                      title="Hapus Kategori"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-400 dark:text-indigo-500 rounded-xl text-[8px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-800/30" title="Kategori Sistem (Tidak dapat dihapus)">
+                      <Shield className="w-2.5 h-2.5" /> Sistem
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+        
+        {filteredCategories.length === 0 && (
+          <div className="col-span-full py-20 bg-slate-50 dark:bg-slate-800/20 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center text-slate-400 dark:text-slate-600">
+            <Tag className="w-12 h-12 mb-4 opacity-20" />
+            <p className="font-black text-sm uppercase tracking-widest">Belum Ada Kategori</p>
+            <p className="text-xs mt-2 font-medium">Gunakan form di atas untuk menambah kategori baru.</p>
           </div>
         )}
       </div>

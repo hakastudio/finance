@@ -15,6 +15,7 @@
                     animation: {
                         shake: 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
                         fadeIn: 'fadeIn 0.5s ease-out forwards',
+                        marquee: 'marquee 25s linear infinite',
                     },
                     keyframes: {
                         shake: {
@@ -26,6 +27,10 @@
                         fadeIn: {
                             'from': { opacity: '0', transform: 'translateY(10px)' },
                             'to': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        marquee: {
+                            '0%': { transform: 'translateX(0)' },
+                            '100%': { transform: 'translateX(-50%)' },
                         }
                     }
                 }
@@ -41,7 +46,6 @@
             transition: background-color 0.3s ease;
         }
         
-        /* Dark mode body override */
         html.dark body {
             background-color: #020617;
             color: #f8fafc;
@@ -62,41 +66,16 @@
             box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
         }
 
-        /* Custom Scrollbar Light */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        /* Custom Scrollbar Dark */
-        html.dark ::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        html.dark ::-webkit-scrollbar-thumb {
-            background: #334155;
-        }
-        html.dark ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
-        }
-
-        .glass {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
-        html.dark .glass {
-            background: rgba(15, 23, 42, 0.7);
-            border: 1px solid rgba(30, 41, 59, 0.4);
+        html.dark ::-webkit-scrollbar-track { background: #0f172a; }
+        html.dark ::-webkit-scrollbar-thumb { background: #334155; }
+
+        .animate-marquee {
+            display: inline-flex;
+            width: fit-content;
         }
     </style>
 <script type="importmap">

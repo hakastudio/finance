@@ -3,6 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { Transaction, FinancialSummary } from "../types";
 
 export const getFinancialAdvice = async (transactions: Transaction[], summary: FinancialSummary) => {
+  // Always use { apiKey: process.env.API_KEY } for initialization
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const transactionSummary = transactions.map(t => ({
@@ -34,8 +35,9 @@ export const getFinancialAdvice = async (transactions: Transaction[], summary: F
   `;
 
   try {
+    // Upgraded to gemini-3-pro-preview for complex reasoning and data evaluation
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         temperature: 0.7,
@@ -44,6 +46,7 @@ export const getFinancialAdvice = async (transactions: Transaction[], summary: F
       }
     });
 
+    // Access the .text property directly as per the latest SDK guidelines
     return response.text;
   } catch (error) {
     console.error("Gemini AI Error:", error);
