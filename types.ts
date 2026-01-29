@@ -18,6 +18,7 @@ export interface Transaction {
   description: string;
   date: string;
   type: TransactionType;
+  createdBy?: 'admin' | 'user'; // Field baru untuk audit
 }
 
 export interface FinancialSummary {

@@ -7,7 +7,7 @@ import {
   Tag, Utensils, Edit3, Coffee, Home, 
   Zap, Music, Gamepad, Smartphone, 
   TrendingUp, Dumbbell, Plane, Coins, 
-  Shield, ShoppingCart
+  Shield, ShoppingCart, User as UserIcon
 } from 'lucide-react';
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
   onDelete: (id: string) => void;
   onEdit: (transaction: Transaction) => void;
   compact?: boolean;
-  showActions?: boolean; // New prop to control access
+  showActions?: boolean;
 }
 
 const getCategoryIcon = (category: string) => {
@@ -50,7 +50,7 @@ const TransactionList: React.FC<Props> = ({
   onDelete, 
   onEdit, 
   compact = false,
-  showActions = true // Enabled by default for backward compatibility but controlled in App.tsx
+  showActions = true
 }) => {
   if (transactions.length === 0) {
     return (
@@ -58,8 +58,8 @@ const TransactionList: React.FC<Props> = ({
         <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-sm mb-4">
           <ShoppingBag className="w-10 h-10 opacity-30 text-indigo-500" />
         </div>
-        <p className="font-bold">Belum ada transaksi terdaftar</p>
-        <p className="text-sm mt-1 opacity-70">Mulai catat keuanganmu sekarang!</p>
+        <p className="font-bold">Database Kosong</p>
+        <p className="text-sm mt-1 opacity-70">Belum ada record data yang tersimpan.</p>
       </div>
     );
   }
@@ -72,20 +72,23 @@ const TransactionList: React.FC<Props> = ({
             <thead>
               <tr className="border-b-2 border-slate-50 dark:border-slate-800">
                 <th scope="col" className="px-6 py-4 text-left text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
-                  Detail & Deskripsi
+                  Record Details
                 </th>
                 <th scope="col" className="px-6 py-4 text-left text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest hidden md:table-cell">
-                  Kategori
+                  Category
                 </th>
                 <th scope="col" className="px-6 py-4 text-left text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest hidden lg:table-cell">
-                  Tanggal
+                  Date
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest hidden sm:table-cell">
+                  Input By
                 </th>
                 <th scope="col" className="px-6 py-4 text-right text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
-                  Jumlah
+                  Amount
                 </th>
                 {showActions && (
                   <th scope="col" className="px-6 py-4 text-right text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
-                    Aksi
+                    Actions
                   </th>
                 )}
               </tr>
@@ -106,10 +109,10 @@ const TransactionList: React.FC<Props> = ({
                     <div>
                       <p className="text-base font-black text-slate-900 dark:text-slate-100 leading-none mb-1.5">{t.description}</p>
                       <div className="flex items-center gap-2 md:hidden">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${
-                          t.type === TransactionType.INCOME ? 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600' : 'bg-rose-50 dark:bg-rose-900/40 text-rose-600'
+                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter ${
+                          t.createdBy === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-600'
                         }`}>
-                          {t.category}
+                          {t.createdBy || 'user'}
                         </span>
                         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">{t.date}</span>
                       </div>
@@ -118,7 +121,7 @@ const TransactionList: React.FC<Props> = ({
                 </td>
                 {!compact && (
                   <td className="px-6 py-5 hidden md:table-cell">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                       {t.category}
                     </span>
                   </td>
@@ -126,6 +129,16 @@ const TransactionList: React.FC<Props> = ({
                 {!compact && (
                   <td className="px-6 py-5 hidden lg:table-cell whitespace-nowrap">
                     <p className="text-sm font-bold text-slate-500 dark:text-slate-400">{t.date}</p>
+                  </td>
+                )}
+                {!compact && (
+                  <td className="px-6 py-5 hidden sm:table-cell">
+                    <div className="flex items-center gap-2">
+                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-black text-white ${t.createdBy === 'admin' ? 'bg-purple-500' : 'bg-slate-400'}`}>
+                         {(t.createdBy || 'u').charAt(0).toUpperCase()}
+                       </div>
+                       <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{t.createdBy || 'user'}</span>
+                    </div>
                   </td>
                 )}
                 <td className="px-6 py-5 text-right whitespace-nowrap">
@@ -141,14 +154,12 @@ const TransactionList: React.FC<Props> = ({
                       <button 
                         onClick={() => onEdit(t)}
                         className="p-3 text-slate-300 dark:text-slate-600 hover:text-indigo-500 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-2xl transition-all active:scale-90"
-                        title="Edit Transaksi (Admin Only)"
                       >
                         <Edit3 className="w-5 h-5" />
                       </button>
                       <button 
                         onClick={() => onDelete(t.id)}
                         className="p-3 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all active:scale-90"
-                        title="Hapus Transaksi (Admin Only)"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
